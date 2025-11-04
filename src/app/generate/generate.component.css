@@ -1,0 +1,22 @@
+.generate-layout {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    height: 100vh;
+    gap: 12px;
+    padding: 12px;
+}
+
+.side {
+    background: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px;
+    overflow-y: auto;
+}
+
+.center {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 16px;
+}

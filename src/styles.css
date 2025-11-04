@@ -1,1 +1,180 @@
-/* You can add global styles to this file, and also import other style files */
+/* General Styles */
+body {
+    background-color: #f5e6d3; /* Light beige background */
+    font-family: 'Georgia', serif; /* Cozy serif font */
+    color: #5a3e2b; /* Dark brown text */
+    margin: 0;
+    padding: 20px; /* Add padding for breathing room */
+    min-height: 100vh; /* Ensure full height */
+}
+
+/* Main Container for All Pages */
+.container {
+    max-width: 1200px; /* Limit width for larger screens */
+    margin: 0 auto; /* Center content */
+    background-color: #fffaf0; /* Very light cream background */
+    border: 1px solid #d4b59b; /* Soft brown border */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    padding: 20px;
+}
+
+/* Flex Layout for Card Templates */
+#container {
+    display: flex;
+    height: calc(100vh - 40px); /* Adjust for body padding */
+    overflow: hidden; /* Prevent scrollbars */
+}
+
+/* Edit Section */
+#edit-section {
+    width: 400px;
+    padding: 20px;
+    border: 1px solid #d4b59b;
+    margin: 10px;
+    background-color: #fffaf0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: auto;
+}
+
+/* Preview Section */
+#preview-section {
+    flex: 1;
+    padding: 20px;
+    border: 1px solid #d4b59b;
+    margin: 10px;
+    background-color: #fffaf0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: auto;
+}
+
+/* Saved Templates Section */
+#saved-templates-section {
+    width: 300px;
+    padding: 20px;
+    border: 1px solid #d4b59b;
+    margin: 10px;
+    background-color: #fffaf0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: auto;
+}
+
+/* Textarea and Input Fields */
+textarea, input[type="text"], input[type="password"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid #d4b59b;
+    border-radius: 4px;
+    background-color: #fdf7e6;
+    font-family: 'Arial', sans-serif;
+    color: #5a3e2b;
+    margin-bottom: 10px;
+}
+
+/* Buttons */
+button {
+    background-color: #a67b5b; /* Warm brown */
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 5px;
+    font-family: 'Georgia', serif;
+    font-size: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+button:hover {
+    background-color: #8c5e3e; /* Darker brown on hover */
+}
+
+/* Resize Handle */
+.resize-handle {
+    width: 5px;
+    background: #d4b59b;
+    cursor: ew-resize;
+    flex-shrink: 0;
+}
+
+.resize-handle:hover {
+    background: #b89b7d;
+}
+
+/* Headings */
+h1, h2, h3 {
+    color: #5a3e2b;
+    font-family: 'Georgia', serif;
+    text-align: center; /* Center headings for a neat look */
+    margin-bottom: 20px;
+}
+
+/* Links */
+a {
+    color: #a67b5b;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Error Messages */
+.error {
+    color: #d9534f;
+    background-color: #f2dede;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+/* Table Styles for users.html */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+th, td {
+    padding: 12px;
+    border: 1px solid #d4b59b;
+    text-align: left;
+}
+
+th {
+    background-color: #a67b5b;
+    color: #fff;
+}
+
+tr:nth-child(even) {
+    background-color: #fdf7e6;
+}
+
+/* Form Styles for login.html and register.html */
+form {
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fffaf0;
+    border: 1px solid #d4b59b;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #5a3e2b;
+}
+
+/* Center Content for Simple Pages */
+.page-content {
+    text-align: center;
+    padding: 50px;
+}

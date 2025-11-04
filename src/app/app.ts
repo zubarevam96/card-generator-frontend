@@ -5,12 +5,9 @@ import { RouterOutlet } from '@angular/router';
   selector: 'app-root',
   imports: [RouterOutlet],
   template: `
-    <h1>Welcome to {{ title() }}!</h1>
-
     <router-outlet />
   `,
   styles: [],
 })
 export class App {
-  protected readonly title = signal('card-generator-frontend');
 }
