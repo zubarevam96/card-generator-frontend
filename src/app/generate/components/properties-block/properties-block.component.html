@@ -1,8 +1,11 @@
-<div class="block">
+<div class="properties-block">
     <h3>Properties</h3>
-    <button (click)="toggle()">Toggle Details</button>
 
-    <div *ngIf="showDetails">
-        <p>Here you can modify card settings, colors, fonts, etc.</p>
-    </div>
+    <label>Card Name:</label>
+    <input [(ngModel)]="cardName" placeholder="Card name" />
+
+    <label>HTML Content:</label>
+    <textarea [(ngModel)]="htmlText" (input)="onHtmlChange()" rows="6"></textarea>
+
+    <button (click)="saveCard()">Save Card</button>
 </div>

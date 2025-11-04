@@ -1,17 +1,26 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { CardService } from '../../../services/card.service';
+import { Card } from '../../../models/card.model';
 
 @Component({
   selector: 'app-templates-block',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './templates-block.component.html',
-  styleUrls: ['./templates-block.component.css']
 })
 export class TemplatesBlockComponent {
-  showTemplates = true;
+    cards: Card[] = [];
 
-  toggle() {
-    this.showTemplates = !this.showTemplates;
-  }
+    constructor(private cardService: CardService) {
+        this.cardService.cards$.subscribe((cards: Card[]) => (this.cards = cards));
+    }
+
+    load(card: Card) {
+        this.cardService.loadCard(card);
+    }
+
+    delete(card: Card) {
+        this.cardService.deleteCard(card.id);
+    }
 }

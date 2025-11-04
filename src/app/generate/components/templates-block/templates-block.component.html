@@ -1,8 +1,8 @@
-<div class="block">
-    <h3>Templates</h3>
-    <button (click)="toggle()">Toggle Templates</button>
-
-    <div *ngIf="showTemplates">
-        <p>Saved and preset templates will appear here.</p>
+<div class="templates-block">
+    <h3>Saved Cards</h3>
+    <div *ngFor="let card of cards">
+        <strong>{{ card.name }}</strong>
+        <button (click)="load(card)">Load</button>
+        <button (click)="delete(card)">Delete</button>
     </div>
 </div>
