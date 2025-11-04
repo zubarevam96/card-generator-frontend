@@ -17,7 +17,7 @@ export class TemplatesBlockComponent {
     }
 
     load(card: Card) {
-        this.cardService.loadCard(card);
+        this.cardService.selectCard(card);
     }
 
     delete(card: Card) {

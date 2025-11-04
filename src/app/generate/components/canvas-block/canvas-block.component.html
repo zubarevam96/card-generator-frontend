@@ -1,4 +1,15 @@
 <div class="canvas-block">
-    <h3>Canvas Preview</h3>
-    <div [innerHTML]="safeHtml"></div>
+    <h3>Canvas</h3>
+    <div class="canvas-container">
+        <div
+                *ngFor="let card of cards"
+                class="canvas-card"
+                [class.selected]="isSelected(card)"
+                [style.width.px]="cardWidth"
+                [style.height.px]="cardHeight"
+                (click)="selectCard(card)"
+        >
+            <div [innerHTML]="getSafeHtml(card)"></div>
+        </div>
+    </div>
 </div>

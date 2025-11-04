@@ -5,7 +5,12 @@
     <input [(ngModel)]="cardName" placeholder="Card name" />
 
     <label>HTML Content:</label>
-    <textarea [(ngModel)]="htmlText" (input)="onHtmlChange()" rows="6"></textarea>
+    <textarea
+            [(ngModel)]="htmlText"
+            (input)="onHtmlChange()"
+            rows="8"
+            placeholder="Enter HTML code..."
+    ></textarea>
 
-    <button (click)="saveCard()">Save Card</button>
+    <button (click)="saveNewCard()">Save New Card</button>
 </div>
