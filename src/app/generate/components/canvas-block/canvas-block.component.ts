@@ -1,9 +1,9 @@
-// src/app/generate/components/canvas-block/canvas-block.component.ts
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { CanvasService } from '../../../services/canvas.service';
 import { Card } from '../../../models/card.model';
+import { Canvas } from '../../../models/canvas.model';
 
 @Component({
   selector: 'app-canvas-block',
@@ -11,16 +11,17 @@ import { Card } from '../../../models/card.model';
   imports: [CommonModule],
   templateUrl: './canvas-block.component.html',
   styleUrls: ['./canvas-block.component.css']
+
 })
 export class CanvasBlockComponent {
   cards: Card[] = [];
   selectedCardId: number | null = null;
-  cardWidth = 200;
-  cardHeight = 280;
+  canvas: Canvas = new Canvas();
 
   constructor(private canvasService: CanvasService, private sanitizer: DomSanitizer) {
     this.canvasService.cards$.subscribe(cards => (this.cards = cards));
     this.canvasService.selectedCard$.subscribe(c => (this.selectedCardId = c?.id ?? null));
+    this.canvasService.canvas$.subscribe(c => (this.canvas = c));
   }
 
   getSafeHtml(card: Card): SafeHtml {

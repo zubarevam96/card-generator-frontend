@@ -1,4 +1,13 @@
 <div class="canvas-properties">
-    <h3>Canvas Properties (stub)</h3>
-    <p>Canvas configuration options will appear here later.</p>
+    <h4>Canvas Properties</h4>
+
+    <label>
+        Card Width:
+        <input type="number" [(ngModel)]="canvas.cardWidth" (input)="updateCanvas()" />
+    </label>
+
+    <label>
+        Card Height:
+        <input type="number" [(ngModel)]="canvas.cardHeight" (input)="updateCanvas()" />
+    </label>
 </div>

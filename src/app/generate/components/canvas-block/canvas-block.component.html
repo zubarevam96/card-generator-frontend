@@ -6,8 +6,8 @@
                 *ngFor="let card of cards"
                 class="canvas-card"
                 [class.selected]="isSelected(card)"
-                [style.width.px]="cardWidth"
-                [style.height.px]="cardHeight"
+                [style.width.px]="canvas.cardWidth"
+                [style.height.px]="canvas.cardHeight"
                 (click)="selectCard(card)"
         >
             <div [innerHTML]="getSafeHtml(card)"></div>
