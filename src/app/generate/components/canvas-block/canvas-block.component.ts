@@ -12,7 +12,7 @@ import { Canvas } from '../../../models/canvas.model';
   imports: [CommonModule],
   templateUrl: './canvas-block.component.html',
   styleUrls: ['./canvas-block.component.css'],
-  encapsulation: ViewEncapsulation.ShadowDom  // 🔹 add this line
+  encapsulation: ViewEncapsulation.ShadowDom
 })
 
 export class CanvasBlockComponent {
