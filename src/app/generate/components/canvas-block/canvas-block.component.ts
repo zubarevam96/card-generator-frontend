@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { CanvasService } from '../../../services/canvas.service';
 import { Card } from '../../../models/card.model';
+import { ViewEncapsulation } from '@angular/core';
 import { Canvas } from '../../../models/canvas.model';
 
 @Component({
@@ -10,9 +11,10 @@ import { Canvas } from '../../../models/canvas.model';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './canvas-block.component.html',
-  styleUrls: ['./canvas-block.component.css']
-
+  styleUrls: ['./canvas-block.component.css'],
+  encapsulation: ViewEncapsulation.ShadowDom  // 🔹 add this line
 })
+
 export class CanvasBlockComponent {
   cards: Card[] = [];
   selectedCardId: number | null = null;

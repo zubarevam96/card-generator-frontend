@@ -1,3 +1,25 @@
+:host {
+/* keep 'all: initial' if you need it, but restore useful defaults */
+    all: initial;
+    display: block;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    color: #111;
+    line-height: 1.25;
+    box-sizing: border-box; /* make sizing sane for host */
+}
+
+/* helper: ensure all elements use border-box inside shadow root */
+:host, :host * {
+    box-sizing: border-box;
+}
+
+/* Canvas layout */
+.canvas-block {
+    display: flex;
+    flex-direction: column;
+}
+
+/* container spacing between cards (unchanged) */
 .canvas-container {
     display: flex;
     flex-wrap: wrap;
@@ -6,32 +28,63 @@
     padding: 16px;
 }
 
+/* outer card frame: width/height come from [style.width.px]/[style.height.px] */
 .canvas-card {
-    box-sizing: border-box; /* 🔹 ensures width & height include borders */
+    box-sizing: border-box;        /* IMPORTANT: include border in size */
     display: flex;
-    align-items: center;
+    align-items: stretch;          /* make inner fill height */
     justify-content: center;
-
-    border: 5px solid #3b2e1e; /* typical MTG-style brown frame border */
     border-radius: 10px;
     background-color: #fff;
     overflow: hidden;
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    padding: 0;                    /* do not add outer padding that affects size */
 }
 
+/* selected visual */
 .canvas-card.selected {
     border-color: #007bff;
     box-shadow: 0 0 8px rgba(0, 123, 255, 0.6);
     transform: scale(1.02);
 }
 
+/* The inner wrapper must exactly fill the card area (including border),
+   and we normalize content inside it so injected HTML behaves predictably. */
 .card-inner {
     box-sizing: border-box;
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: #fefefe;
+    display: block;
     border-radius: 6px;
-    padding: 8px; /* optional — creates small inner margin */
+    background-color: #fefefe;
 }
+
+/* Normalize likely elements inside the injected HTML so they don't push layout */
+.card-inner h1,
+.card-inner h2,
+.card-inner h3,
+.card-inner h4,
+.card-inner p,
+.card-inner ul,
+.card-inner ol {
+    margin: 0 0 6px 0; /* mild spacing but predictable */
+    padding: 0;
+    line-height: 1.15;
+}
+
+/* Ensure images inside card fill the width of the inner area and don't add gaps */
+.card-inner img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+/* Make any block-level content fill width and not overflow */
+.card-inner > * {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* If you want the inner content to scale (optional), you can add rules here. */

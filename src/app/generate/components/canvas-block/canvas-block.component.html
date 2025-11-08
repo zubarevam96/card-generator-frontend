@@ -10,7 +10,7 @@
                 [style.height.px]="canvas.cardHeight"
                 (click)="selectCard(card)"
         >
-            <div [innerHTML]="getSafeHtml(card)"></div>
+            <div class="card-inner" [innerHTML]="getSafeHtml(card)"></div>
         </div>
     </div>
 </div>
