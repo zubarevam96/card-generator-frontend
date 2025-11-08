@@ -1,8 +1,16 @@
 <div class="templates-block">
-    <h3>Saved Cards</h3>
+    <h3>Templates</h3>
+    <div *ngFor="let template of templates">
+        <strong>{{ template.name }}</strong>
+        <button (click)="loadTemplate(template)">Load</button>
+        <button (click)="deleteTemplate(template)">Delete</button>
+    </div>
+
+    <h3>Cards</h3>
     <div *ngFor="let card of cards">
         <strong>{{ card.name }}</strong>
-        <button (click)="load(card)">Load</button>
-        <button (click)="delete(card)">Delete</button>
+        <button (click)="selectCard(card)">Select</button>
+        <button (click)="removeCard(card)">Remove</button>
+        <button *ngIf="!card.isLocked" (click)="saveCardToTemplates(card)">Save to Templates</button>
     </div>
 </div>

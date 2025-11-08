@@ -13,22 +13,25 @@ import { Card } from '../../../../models/card.model';
 export class CardPropertiesComponent {
   htmlText = '';
   cardName = '';
+  isLocked = false;
 
   constructor(private canvasService: CanvasService) {
-    // subscribe to currently selected card
     this.canvasService.selectedCard$.subscribe((card: Card | null) => {
       this.htmlText = card?.html ?? '';
       this.cardName = card?.name ?? '';
+      this.isLocked = card?.isLocked ?? false;
     });
   }
 
   onHtmlChange() {
-    this.canvasService.updateSelectedHtml(this.htmlText);
+    if (!this.isLocked) {
+      this.canvasService.updateSelectedHtml(this.htmlText);
+    }
   }
 
   saveNewCard() {
     if (this.cardName.trim()) {
-      this.canvasService.addCard(this.cardName, this.htmlText);
+      this.canvasService.addCard(this.cardName, this.htmlText);  // Defaults to unlocked
       this.cardName = '';
       this.htmlText = '';
     }

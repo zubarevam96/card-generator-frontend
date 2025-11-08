@@ -10,7 +10,9 @@
             (input)="onHtmlChange()"
             rows="8"
             placeholder="Enter HTML code..."
+            [disabled]="isLocked"
     ></textarea>
+    <p *ngIf="isLocked">This card is based on a template and cannot be edited.</p>
 
     <button (click)="saveNewCard()">Save New Card</button>
 </div>

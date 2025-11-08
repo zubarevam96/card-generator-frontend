@@ -2,9 +2,10 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Card } from '../models/card.model';
 import { Canvas } from '../models/canvas.model';
-import { CardStorageService } from './card-storage.service';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root'
+})
 export class CanvasService {
   private cardsSubject = new BehaviorSubject<Card[]>([]);
   cards$ = this.cardsSubject.asObservable();
@@ -12,37 +13,36 @@ export class CanvasService {
   private selectedCardSubject = new BehaviorSubject<Card | null>(null);
   selectedCard$ = this.selectedCardSubject.asObservable();
 
-  private showCanvasPropsSubject = new BehaviorSubject<boolean>(false);
-  showCanvasProps$ = this.showCanvasPropsSubject.asObservable();
-
   private canvasSubject = new BehaviorSubject<Canvas>(new Canvas());
   canvas$ = this.canvasSubject.asObservable();
 
-  constructor(private storage: CardStorageService) {
-    const saved = this.storage.loadCards();
-    this.cardsSubject.next(saved);
-  }
+  private showCanvasPropsSubject = new BehaviorSubject<boolean>(false);
+  showCanvasProps$ = this.showCanvasPropsSubject.asObservable();
 
-  addCard(name: string, html: string) {
-    const newCard = new Card(name, html);
-    const cards = [...this.cardsSubject.value, newCard];
-    this.cardsSubject.next(cards);
-    this.storage.saveCards(cards);
+  addCard(name: string, html: string, isLocked: boolean = false) {
+    const card = new Card(name, html, undefined, isLocked);
+    this.cardsSubject.next([...this.cardsSubject.value, card]);
   }
 
   deleteCard(id: number) {
-    const cards = this.cardsSubject.value.filter(c => c.id !== id);
-    this.cardsSubject.next(cards);
-    this.storage.saveCards(cards);
-
+    const current = this.cardsSubject.value.filter(c => c.id !== id);
+    this.cardsSubject.next(current);
     if (this.selectedCardSubject.value?.id === id) {
       this.selectedCardSubject.next(null);
     }
   }
 
-  selectCard(card: Card | null) {
+  selectCard(card: Card) {
     this.selectedCardSubject.next(card);
     this.showCanvasPropsSubject.next(false);
+  }
+
+  updateSelectedHtml(html: string) {
+    const selected = this.selectedCardSubject.value;
+    if (selected && !selected.isLocked) {
+      selected.html = html;
+      this.cardsSubject.next([...this.cardsSubject.value]);
+    }
   }
 
   showCanvasProperties() {
@@ -50,25 +50,7 @@ export class CanvasService {
     this.showCanvasPropsSubject.next(true);
   }
 
-  updateSelectedHtml(html: string) {
-    const selected = this.selectedCardSubject.value;
-    if (!selected) return;
-
-    const updated = { ...selected, html };
-    const updatedCards = this.cardsSubject.value.map(c =>
-      c.id === selected.id ? updated : c
-    );
-    this.cardsSubject.next(updatedCards);
-    this.selectedCardSubject.next(updated);
-    this.storage.saveCards(updatedCards);
-  }
-
-  /** 🔹 Canvas logic */
-  updateCanvas(newCanvas: Canvas) {
-    this.canvasSubject.next(newCanvas);
-  }
-
-  getCanvas(): Canvas {
-    return this.canvasSubject.value;
+  updateCanvas(canvas: Canvas) {
+    this.canvasSubject.next(canvas);
   }
 }
