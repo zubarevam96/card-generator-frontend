@@ -6,13 +6,15 @@ export class Card {
   templateHtml: string;
   variables: { [key: string]: string };
   isLocked: boolean;
+  templateId?: number;
 
   constructor(
     name: string,
     templateHtml: string,
     id?: number,
     isLocked: boolean = false,
-    variables: { [key: string]: string } = {}
+    variables: { [key: string]: string } = {},
+    templateId?: number
   ) {
     if (id) {
       this.id = id;
@@ -24,6 +26,7 @@ export class Card {
     this.templateHtml = templateHtml;
     this.isLocked = isLocked;
     this.variables = variables;
+    this.templateId = templateId;
   }
 
   get renderedHtml(): string {

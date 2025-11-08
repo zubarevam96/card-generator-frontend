@@ -16,21 +16,45 @@ export class CardPropertiesComponent {
   isLocked = false;
   localVariables: { [key: string]: string } = {};
   variableKeys: string[] = [];
+  isEditingTemplate = false;
 
   constructor(private canvasService: CanvasService) {
     this.canvasService.selectedCard$.subscribe((card: Card | null) => {
-      this.htmlText = card?.renderedHtml ?? '';
-      this.cardName = card?.name ?? '';
-      this.isLocked = card?.isLocked ?? false;
-      this.localVariables = { ...card?.variables };
-      this.variableKeys = Object.keys(this.localVariables);
+      if (card) {
+        this.htmlText = card.renderedHtml;
+        this.cardName = card.name;
+        this.isLocked = card.isLocked;
+        this.localVariables = { ...card.variables };
+        this.variableKeys = Object.keys(this.localVariables);
+        this.isEditingTemplate = false;
+      }
+    });
+
+    this.canvasService.selectedTemplate$.subscribe((template: Card | null) => {
+      if (template) {
+        this.htmlText = template.templateHtml;
+        this.cardName = template.name;
+        this.isLocked = false;  // Always editable for templates
+        this.localVariables = {};
+        this.variableKeys = [];
+        this.isEditingTemplate = true;
+      }
     });
   }
 
   onHtmlChange() {
-    if (!this.isLocked) {
+    if (this.isEditingTemplate) {
+      this.canvasService.updateTemplateHtml(this.htmlText);
+    } else if (!this.isLocked) {
       this.canvasService.updateSelectedHtml(this.htmlText);
     }
+  }
+
+  onNameChange() {
+    if (this.isEditingTemplate) {
+      this.canvasService.updateTemplateName(this.cardName);
+    }
+    // Optionally add for cards: this.canvasService.updateSelectedName(this.cardName);
   }
 
   onVariableChange(key: string) {

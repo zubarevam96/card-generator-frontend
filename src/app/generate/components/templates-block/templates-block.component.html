@@ -3,6 +3,7 @@
     <div *ngFor="let template of templates">
         <strong>{{ template.name }}</strong>
         <button (click)="loadTemplate(template)">Load</button>
+        <button (click)="editTemplate(template)">Edit</button>
         <button (click)="deleteTemplate(template)">Delete</button>
     </div>
 

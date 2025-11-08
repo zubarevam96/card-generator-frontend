@@ -2,7 +2,7 @@
     <h3>Card Properties</h3>
 
     <label>Card Name:</label>
-    <input [(ngModel)]="cardName" placeholder="Card name" />
+    <input [(ngModel)]="cardName" (input)="onNameChange()" placeholder="Card name" />
 
     <ng-container *ngIf="!isLocked; else variableInputs">
         <label>HTML Content:</label>

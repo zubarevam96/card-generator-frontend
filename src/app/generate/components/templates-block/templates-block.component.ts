@@ -28,7 +28,7 @@ export class TemplatesBlockComponent {
 
     while ((match = placeholderRegex.exec(template.templateHtml)) !== null) {
       const key = match[1];
-      const defaultVal = match[2];
+      const defaultVal = match[2] ?? match[0].split('=')[1].trim();
       if (!variables[key]) {
         variables[key] = defaultVal;
       }
@@ -37,9 +37,13 @@ export class TemplatesBlockComponent {
     // Replace {{key="default"}} with {{key}}
     templateHtml = template.templateHtml.replace(placeholderRegex, '{{$1}}');
 
-    // Add the card as locked with variables
+    // Add the card as locked with variables and templateId
     const copyName = `${template.name} (from template)`;
-    this.canvasService.addCard(copyName, templateHtml, true, variables);
+    this.canvasService.addCard(copyName, templateHtml, true, variables, template.id);
+  }
+
+  editTemplate(template: Card) {
+    this.canvasService.editTemplate(template);
   }
 
   deleteTemplate(template: Card) {

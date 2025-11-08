@@ -87,4 +87,27 @@
     box-sizing: border-box;
 }
 
-/* If you want the inner content to scale (optional), you can add rules here. */
+.canvas-block {
+    position: relative;  /* Add this to scope the absolute overlay to this container */
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.modal-card {
+    background: white;
+    padding: 0;  /* Remove padding to show full card without extra space */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    overflow: hidden;  /* Change to hidden to prevent scrollbars */
+}

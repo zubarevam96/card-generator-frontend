@@ -14,4 +14,14 @@
             <div class="card-inner" [innerHTML]="getSafeHtml(card)"></div>
         </div>
     </div>
+
+    <div *ngIf="isEditingTemplate" class="modal-overlay" (click)="closeModal($event)">
+        <div
+                class="modal-card"
+                (click)="$event.stopPropagation()"
+                [style.width.px]="canvas.cardWidth"
+                [style.height.px]="canvas.cardHeight"
+                [innerHTML]="getPreviewSafeHtml()"
+        ></div>
+    </div>
 </div>

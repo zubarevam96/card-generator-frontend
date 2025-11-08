@@ -22,6 +22,16 @@ export class CardStorageService {
     this.saveToStorage();
   }
 
+  updateCard(updatedCard: Card) {
+    const current = this.savedCardsSubject.value.map(c =>
+      c.id === updatedCard.id
+        ? new Card(updatedCard.name, updatedCard.templateHtml, updatedCard.id, updatedCard.isLocked, updatedCard.variables, updatedCard.templateId)
+        : c
+    );
+    this.savedCardsSubject.next(current);
+    this.saveToStorage();
+  }
+
   private saveToStorage() {
     localStorage.setItem('savedCards', JSON.stringify(this.savedCardsSubject.value));
   }
@@ -30,7 +40,7 @@ export class CardStorageService {
     const stored = localStorage.getItem('savedCards');
     if (stored) {
       const parsed = JSON.parse(stored);
-      return parsed.map((c: any) => new Card(c.name, c.templateHtml || c.html, c.id, c.isLocked, c.variables || {}));
+      return parsed.map((c: any) => new Card(c.name, c.templateHtml || c.html, c.id, c.isLocked, c.variables || {}, c.templateId));
     }
     return [];
   }
