@@ -1,16 +1,9 @@
 <div class="properties-block">
-    <h3>Properties</h3>
+    <ng-container *ngIf="showCanvasProps; else cardProps">
+        <app-canvas-properties></app-canvas-properties>
+    </ng-container>
 
-    <label>Card Name:</label>
-    <input [(ngModel)]="cardName" placeholder="Card name" />
-
-    <label>HTML Content:</label>
-    <textarea
-            [(ngModel)]="htmlText"
-            (input)="onHtmlChange()"
-            rows="8"
-            placeholder="Enter HTML code..."
-    ></textarea>
-
-    <button (click)="saveNewCard()">Save New Card</button>
+    <ng-template #cardProps>
+        <app-card-properties></app-card-properties>
+    </ng-template>
 </div>

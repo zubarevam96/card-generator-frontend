@@ -1,34 +1,24 @@
+// src/app/generate/components/properties-block/properties-block.component.ts
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { CardService } from '../../../services/card.service';
+import { CardPropertiesComponent } from './card-properties/card-properties.component';
+import { CanvasPropertiesComponent } from './canvas-properties/canvas-properties.component';
+import { CanvasService } from '../../../services/canvas.service';
+import { Card } from '../../../models/card.model';
 
 @Component({
   selector: 'app-properties-block',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './properties-block.component.html'
+  imports: [CommonModule, CardPropertiesComponent, CanvasPropertiesComponent],
+  templateUrl: './properties-block.component.html',
+  styleUrls: ['./properties-block.component.css']
 })
 export class PropertiesBlockComponent {
-  htmlText = '';
-  cardName = '';
+  selectedCard: Card | null = null;
+  showCanvasProps = false;
 
-  constructor(private cardService: CardService) {
-    this.cardService.selectedCard$.subscribe(card => {
-      this.htmlText = card?.html ?? '';
-      this.cardName = card?.name ?? '';
-    });
-  }
-
-  onHtmlChange() {
-    this.cardService.updateSelectedHtml(this.htmlText);
-  }
-
-  saveNewCard() {
-    if (this.cardName.trim()) {
-      this.cardService.addCard(this.cardName, this.htmlText);
-      this.cardName = '';
-      this.htmlText = '';
-    }
+  constructor(private canvasService: CanvasService) {
+    this.canvasService.selectedCard$.subscribe(card => (this.selectedCard = card));
+    this.canvasService.showCanvasProps$.subscribe(show => (this.showCanvasProps = show));
   }
 }

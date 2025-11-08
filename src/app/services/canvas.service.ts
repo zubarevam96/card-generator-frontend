@@ -1,15 +1,19 @@
+// src/app/services/card.service.ts
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Card } from '../models/card.model';
 import { CardStorageService } from './card-storage.service';
 
 @Injectable({ providedIn: 'root' })
-export class CardService {
+export class CanvasService {
   private cardsSubject = new BehaviorSubject<Card[]>([]);
   cards$ = this.cardsSubject.asObservable();
 
   private selectedCardSubject = new BehaviorSubject<Card | null>(null);
   selectedCard$ = this.selectedCardSubject.asObservable();
+
+  private showCanvasPropsSubject = new BehaviorSubject<boolean>(false);
+  showCanvasProps$ = this.showCanvasPropsSubject.asObservable();
 
   constructor(private storage: CardStorageService) {
     const saved = this.storage.loadCards();
@@ -35,6 +39,12 @@ export class CardService {
 
   selectCard(card: Card | null) {
     this.selectedCardSubject.next(card);
+    this.showCanvasPropsSubject.next(false); // hide canvas props when card selected
+  }
+
+  showCanvasProperties() {
+    this.selectedCardSubject.next(null);
+    this.showCanvasPropsSubject.next(true);
   }
 
   updateSelectedHtml(html: string) {

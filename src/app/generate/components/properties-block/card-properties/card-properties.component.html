@@ -1,0 +1,16 @@
+<div class="card-properties">
+    <h3>Card Properties</h3>
+
+    <label>Card Name:</label>
+    <input [(ngModel)]="cardName" placeholder="Card name" />
+
+    <label>HTML Content:</label>
+    <textarea
+            [(ngModel)]="htmlText"
+            (input)="onHtmlChange()"
+            rows="8"
+            placeholder="Enter HTML code..."
+    ></textarea>
+
+    <button (click)="saveNewCard()">Save New Card</button>
+</div>

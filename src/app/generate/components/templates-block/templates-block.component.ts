@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CardService } from '../../../services/card.service';
+import { CanvasService } from '../../../services/canvas.service';
 import { Card } from '../../../models/card.model';
 
 @Component({
@@ -12,15 +12,15 @@ import { Card } from '../../../models/card.model';
 export class TemplatesBlockComponent {
     cards: Card[] = [];
 
-    constructor(private cardService: CardService) {
-        this.cardService.cards$.subscribe((cards: Card[]) => (this.cards = cards));
+    constructor(private canvasService: CanvasService) {
+        this.canvasService.cards$.subscribe((cards: Card[]) => (this.cards = cards));
     }
 
     load(card: Card) {
-        this.cardService.selectCard(card);
+        this.canvasService.selectCard(card);
     }
 
     delete(card: Card) {
-        this.cardService.deleteCard(card.id);
+        this.canvasService.deleteCard(card.id);
     }
 }

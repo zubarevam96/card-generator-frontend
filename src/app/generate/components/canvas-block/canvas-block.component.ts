@@ -1,7 +1,8 @@
+// src/app/generate/components/canvas-block/canvas-block.component.ts
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { CardService } from '../../../services/card.service';
+import { CanvasService } from '../../../services/canvas.service';
 import { Card } from '../../../models/card.model';
 
 @Component({
@@ -14,12 +15,12 @@ import { Card } from '../../../models/card.model';
 export class CanvasBlockComponent {
   cards: Card[] = [];
   selectedCardId: number | null = null;
-  cardWidth = 250;
+  cardWidth = 200;
   cardHeight = 280;
 
-  constructor(private cardService: CardService, private sanitizer: DomSanitizer) {
-    this.cardService.cards$.subscribe(cards => (this.cards = cards));
-    this.cardService.selectedCard$.subscribe(c => (this.selectedCardId = c?.id ?? null));
+  constructor(private canvasService: CanvasService, private sanitizer: DomSanitizer) {
+    this.canvasService.cards$.subscribe(cards => (this.cards = cards));
+    this.canvasService.selectedCard$.subscribe(c => (this.selectedCardId = c?.id ?? null));
   }
 
   getSafeHtml(card: Card): SafeHtml {
@@ -27,7 +28,11 @@ export class CanvasBlockComponent {
   }
 
   selectCard(card: Card) {
-    this.cardService.selectCard(card);
+    this.canvasService.selectCard(card);
+  }
+
+  selectCanvas() {
+    this.canvasService.showCanvasProperties();
   }
 
   isSelected(card: Card): boolean {
