@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CanvasService } from '../../../../services/canvas.service';
+import { CardStorageService } from '../../../../services/card-storage.service';
 import { Card } from '../../../../models/card.model';
 
 @Component({
@@ -18,7 +19,7 @@ export class CardPropertiesComponent {
   variableKeys: string[] = [];
   isEditingTemplate = false;
 
-  constructor(private canvasService: CanvasService) {
+  constructor(private canvasService: CanvasService, private cardStorageService: CardStorageService) {
     this.canvasService.selectedCard$.subscribe((card: Card | null) => {
       if (card) {
         this.htmlText = card.renderedHtml;
@@ -66,6 +67,16 @@ export class CardPropertiesComponent {
       this.canvasService.addCard(this.cardName, this.htmlText);  // Defaults to unlocked, no variables
       this.cardName = '';
       this.htmlText = '';
+    }
+  }
+
+  editTemplate() {
+    const selectedCard = this.canvasService.getSelectedCard();
+    if (selectedCard && selectedCard.templateId) {
+      const template = this.cardStorageService.getTemplateById(selectedCard.templateId);
+      if (template) {
+        this.canvasService.editTemplate(template);
+      }
     }
   }
 }

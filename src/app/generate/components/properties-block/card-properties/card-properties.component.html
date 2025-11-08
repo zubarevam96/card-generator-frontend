@@ -15,11 +15,11 @@
     </ng-container>
 
     <ng-template #variableInputs>
-        <p>This card is based on a template. Customize the variables below:</p>
         <div *ngFor="let key of variableKeys">
             <label>{{ key }}:</label>
             <input [(ngModel)]="localVariables[key]" (input)="onVariableChange(key)" placeholder="Enter value..." />
         </div>
+        <button *ngIf="!isEditingTemplate" (click)="editTemplate()">Edit Template</button>
     </ng-template>
 
     <button (click)="saveNewCard()">Save New Card</button>

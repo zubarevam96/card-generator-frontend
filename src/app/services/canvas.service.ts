@@ -85,9 +85,12 @@ export class CanvasService {
   updateTemplateHtml(html: string) {
     const template = this.selectedTemplateSubject.value;
     if (template) {
+      const oldHtml = template.templateHtml;
+      const oldKeys = this.getPlaceholderKeys(oldHtml);
       template.templateHtml = html;
       this.cardStorageService.updateCard(template);
-      this.updateCardsFromTemplate(template);
+      const newKeys = this.getPlaceholderKeys(html);
+      this.updateCardsFromTemplate(template, oldKeys, newKeys);
     }
   }
 
@@ -100,29 +103,70 @@ export class CanvasService {
     }
   }
 
-  private updateCardsFromTemplate(template: Card) {
+  getSelectedCard(): Card | null {
+    return this.selectedCardSubject.value;
+  }
+
+  private getPlaceholderKeys(html: string): Set<string> {
+    const keys = new Set<string>();
+    let match;
+    this.placeholderRegex.lastIndex = 0;  // Reset index
+    while ((match = this.placeholderRegex.exec(html)) !== null) {
+      keys.add(match[1]);
+    }
+    return keys;
+  }
+
+  private updateCardsFromTemplate(template: Card, oldKeys: Set<string>, newKeys: Set<string>) {
+    const removed = new Set([...oldKeys].filter(k => !newKeys.has(k)));
+    const added = new Set([...newKeys].filter(k => !oldKeys.has(k)));
+
+    const renameMap: { [oldKey: string]: string } = {};
+    if (removed.size === 1 && added.size === 1) {
+      const oldKey = [...removed][0];
+      const newKey = [...added][0];
+      renameMap[oldKey] = newKey;
+    }
+
+    // Parse new defaults
+    const newDefaults: { [key: string]: string } = {};
+    let match;
+    this.placeholderRegex.lastIndex = 0;
+    while ((match = this.placeholderRegex.exec(template.templateHtml)) !== null) {
+      const key = match[1];
+      const defaultVal = match[2] ?? match[0].split('=')[1].trim();
+      newDefaults[key] = defaultVal;
+    }
+
+    const newTemplateHtml = template.templateHtml.replace(this.placeholderRegex, '{{$1}}');
+
+    // Update cards
     const currentCards = this.cardsSubject.value.map(card => {
       if (card.templateId === template.id) {
-        // Re-parse the new templateHtml
-        const variables: { [key: string]: string } = {};
-        let match;
-        let newTemplateHtml = template.templateHtml;
+        const updatedVariables = { ...card.variables };
 
-        while ((match = this.placeholderRegex.exec(template.templateHtml)) !== null) {
-          const key = match[1];
-          const defaultVal = match[2] ?? match[0].split('=')[1].trim();
-          variables[key] = defaultVal;
+        // Handle renames
+        for (const [oldKey, newKey] of Object.entries(renameMap)) {
+          if (updatedVariables[oldKey] !== undefined) {
+            updatedVariables[newKey] = updatedVariables[oldKey];
+            delete updatedVariables[oldKey];
+          }
         }
 
-        newTemplateHtml = template.templateHtml.replace(this.placeholderRegex, '{{$1}}');
-
-        // Merge variables: keep existing values, add new defaults, remove obsolete
-        const updatedVariables: { [key: string]: string } = {};
-        for (const key of Object.keys(variables)) {
-          updatedVariables[key] = card.variables[key] ?? variables[key];
+        // Add new keys with defaults if not present
+        for (const key of newKeys) {
+          if (updatedVariables[key] === undefined) {
+            updatedVariables[key] = newDefaults[key];
+          }
         }
 
-        // Create new card instance to trigger change detection
+        // Remove obsolete keys (if not renamed)
+        for (const key of removed) {
+          if (!renameMap[key]) {
+            delete updatedVariables[key];
+          }
+        }
+
         return new Card(
           card.name,
           newTemplateHtml,

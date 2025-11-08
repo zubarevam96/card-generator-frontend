@@ -32,6 +32,10 @@ export class CardStorageService {
     this.saveToStorage();
   }
 
+  getTemplateById(id: number): Card | undefined {
+    return this.savedCardsSubject.value.find(c => c.id === id);
+  }
+
   private saveToStorage() {
     localStorage.setItem('savedCards', JSON.stringify(this.savedCardsSubject.value));
   }
