@@ -3,10 +3,17 @@ let nextCardId = 1;
 export class Card {
   id: number;
   name: string;
-  html: string;
+  templateHtml: string;
+  variables: { [key: string]: string };
   isLocked: boolean;
 
-  constructor(name: string, html: string, id?: number, isLocked: boolean = false) {
+  constructor(
+    name: string,
+    templateHtml: string,
+    id?: number,
+    isLocked: boolean = false,
+    variables: { [key: string]: string } = {}
+  ) {
     if (id) {
       this.id = id;
       if (id >= nextCardId) nextCardId = id + 1; // keep counter in sync
@@ -14,7 +21,16 @@ export class Card {
       this.id = nextCardId++;
     }
     this.name = name;
-    this.html = html;
+    this.templateHtml = templateHtml;
     this.isLocked = isLocked;
+    this.variables = variables;
+  }
+
+  get renderedHtml(): string {
+    let html = this.templateHtml;
+    for (const [key, value] of Object.entries(this.variables)) {
+      html = html.replace(new RegExp(`{{${key}}}`, 'g'), value);
+    }
+    return html;
   }
 }

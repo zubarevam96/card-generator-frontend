@@ -5,7 +5,7 @@ import { CardStorageService } from '../../../services/card-storage.service';
 import { Card } from '../../../models/card.model';
 
 @Component({
-  selector: 'app-templates-block',  // Change to 'app-sidebar-block' if renaming
+  selector: 'app-templates-block',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './templates-block.component.html',
@@ -20,9 +20,26 @@ export class TemplatesBlockComponent {
   }
 
   loadTemplate(template: Card) {
-    // Add a locked copy to the canvas
+    // Parse placeholders like {{key="default"}}, allowing hyphens in keys
+    const placeholderRegex = /{{\s*([\w-]+)\s*=\s*(?:"([^"]*)"|\d+)\s*}}/g;
+    const variables: { [key: string]: string } = {};
+    let match;
+    let templateHtml = template.templateHtml;
+
+    while ((match = placeholderRegex.exec(template.templateHtml)) !== null) {
+      const key = match[1];
+      const defaultVal = match[2];
+      if (!variables[key]) {
+        variables[key] = defaultVal;
+      }
+    }
+
+    // Replace {{key="default"}} with {{key}}
+    templateHtml = template.templateHtml.replace(placeholderRegex, '{{$1}}');
+
+    // Add the card as locked with variables
     const copyName = `${template.name} (from template)`;
-    this.canvasService.addCard(copyName, template.html, true);  // true = locked
+    this.canvasService.addCard(copyName, templateHtml, true, variables);
   }
 
   deleteTemplate(template: Card) {
@@ -38,8 +55,8 @@ export class TemplatesBlockComponent {
   }
 
   saveCardToTemplates(card: Card) {
-    if (!card.isLocked) {  // Only save if not already template-based
-      this.cardStorageService.addCard(card.name, card.html);
+    if (!card.isLocked) {
+      this.cardStorageService.addCard(card.name, card.templateHtml, card.variables);
     }
   }
 }

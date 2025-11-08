@@ -9,8 +9,8 @@ export class CardStorageService {
   private savedCardsSubject = new BehaviorSubject<Card[]>(this.loadFromStorage());
   savedCards$ = this.savedCardsSubject.asObservable();
 
-  addCard(name: string, html: string) {
-    const card = new Card(name, html);
+  addCard(name: string, templateHtml: string, variables: { [key: string]: string } = {}) {
+    const card = new Card(name, templateHtml, undefined, false, variables);
     const current = this.savedCardsSubject.value;
     this.savedCardsSubject.next([...current, card]);
     this.saveToStorage();
@@ -30,7 +30,7 @@ export class CardStorageService {
     const stored = localStorage.getItem('savedCards');
     if (stored) {
       const parsed = JSON.parse(stored);
-      return parsed.map((c: any) => new Card(c.name, c.html, c.id, c.isLocked));
+      return parsed.map((c: any) => new Card(c.name, c.templateHtml || c.html, c.id, c.isLocked, c.variables || {}));
     }
     return [];
   }

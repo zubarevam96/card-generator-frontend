@@ -19,8 +19,8 @@ export class CanvasService {
   private showCanvasPropsSubject = new BehaviorSubject<boolean>(false);
   showCanvasProps$ = this.showCanvasPropsSubject.asObservable();
 
-  addCard(name: string, html: string, isLocked: boolean = false) {
-    const card = new Card(name, html, undefined, isLocked);
+  addCard(name: string, templateHtml: string, isLocked: boolean = false, variables: { [key: string]: string } = {}) {
+    const card = new Card(name, templateHtml, undefined, isLocked, variables);
     this.cardsSubject.next([...this.cardsSubject.value, card]);
   }
 
@@ -40,7 +40,15 @@ export class CanvasService {
   updateSelectedHtml(html: string) {
     const selected = this.selectedCardSubject.value;
     if (selected && !selected.isLocked) {
-      selected.html = html;
+      selected.templateHtml = html;
+      this.cardsSubject.next([...this.cardsSubject.value]);
+    }
+  }
+
+  updateSelectedVariable(key: string, value: string) {
+    const selected = this.selectedCardSubject.value;
+    if (selected && selected.isLocked) {
+      selected.variables[key] = value;
       this.cardsSubject.next([...this.cardsSubject.value]);
     }
   }

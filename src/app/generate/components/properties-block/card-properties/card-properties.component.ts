@@ -14,12 +14,16 @@ export class CardPropertiesComponent {
   htmlText = '';
   cardName = '';
   isLocked = false;
+  localVariables: { [key: string]: string } = {};
+  variableKeys: string[] = [];
 
   constructor(private canvasService: CanvasService) {
     this.canvasService.selectedCard$.subscribe((card: Card | null) => {
-      this.htmlText = card?.html ?? '';
+      this.htmlText = card?.renderedHtml ?? '';
       this.cardName = card?.name ?? '';
       this.isLocked = card?.isLocked ?? false;
+      this.localVariables = { ...card?.variables };
+      this.variableKeys = Object.keys(this.localVariables);
     });
   }
 
@@ -29,9 +33,13 @@ export class CardPropertiesComponent {
     }
   }
 
+  onVariableChange(key: string) {
+    this.canvasService.updateSelectedVariable(key, this.localVariables[key]);
+  }
+
   saveNewCard() {
     if (this.cardName.trim()) {
-      this.canvasService.addCard(this.cardName, this.htmlText);  // Defaults to unlocked
+      this.canvasService.addCard(this.cardName, this.htmlText);  // Defaults to unlocked, no variables
       this.cardName = '';
       this.htmlText = '';
     }

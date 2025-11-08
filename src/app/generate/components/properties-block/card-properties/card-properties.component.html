@@ -4,15 +4,23 @@
     <label>Card Name:</label>
     <input [(ngModel)]="cardName" placeholder="Card name" />
 
-    <label>HTML Content:</label>
-    <textarea
-            [(ngModel)]="htmlText"
-            (input)="onHtmlChange()"
-            rows="8"
-            placeholder="Enter HTML code..."
-            [disabled]="isLocked"
-    ></textarea>
-    <p *ngIf="isLocked">This card is based on a template and cannot be edited.</p>
+    <ng-container *ngIf="!isLocked; else variableInputs">
+        <label>HTML Content:</label>
+        <textarea
+                [(ngModel)]="htmlText"
+                (input)="onHtmlChange()"
+                rows="8"
+                placeholder="Enter HTML code..."
+        ></textarea>
+    </ng-container>
+
+    <ng-template #variableInputs>
+        <p>This card is based on a template. Customize the variables below:</p>
+        <div *ngFor="let key of variableKeys">
+            <label>{{ key }}:</label>
+            <input [(ngModel)]="localVariables[key]" (input)="onVariableChange(key)" placeholder="Enter value..." />
+        </div>
+    </ng-template>
 
     <button (click)="saveNewCard()">Save New Card</button>
 </div>

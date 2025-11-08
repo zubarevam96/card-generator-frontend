@@ -27,7 +27,7 @@ export class CanvasBlockComponent {
   }
 
   getSafeHtml(card: Card): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(card.html);
+    return this.sanitizer.bypassSecurityTrustHtml(card.renderedHtml);
   }
 
   selectCard(card: Card) {
