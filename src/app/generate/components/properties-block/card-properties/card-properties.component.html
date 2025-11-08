@@ -22,5 +22,6 @@
         <button *ngIf="!isEditingTemplate" (click)="editTemplate()">Edit Template</button>
     </ng-template>
 
-    <button (click)="saveNewCard()">Save New Card</button>
+    <button (click)="saveNew()">Save New Template</button>  <!-- Renamed for clarity -->
+    <button *ngIf="isEditingTemplate" (click)="duplicateTemplate()">Duplicate</button>
 </div>

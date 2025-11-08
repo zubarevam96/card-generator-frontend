@@ -42,6 +42,15 @@ export class TemplatesBlockComponent {
     this.canvasService.addCard(copyName, templateHtml, true, variables, template.id);
   }
 
+  newTemplate() {
+    const blankTemplate = new Card('New Template', '', undefined, false, {});
+    this.cardStorageService.addCard(blankTemplate.name, blankTemplate.templateHtml);
+    // Fetch the newly added (with ID) and edit it
+    const newTemplates = this.cardStorageService.getSavedCards();
+    const addedTemplate = newTemplates[newTemplates.length - 1];
+    this.canvasService.editTemplate(addedTemplate);
+  }
+
   editTemplate(template: Card) {
     this.canvasService.editTemplate(template);
   }

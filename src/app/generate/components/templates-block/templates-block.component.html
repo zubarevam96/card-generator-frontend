@@ -1,5 +1,6 @@
 <div class="templates-block">
     <h3>Templates</h3>
+    <button (click)="newTemplate()">New</button>
     <div *ngFor="let template of templates">
         <strong>{{ template.name }}</strong>
         <button (click)="loadTemplate(template)">Load</button>

@@ -107,6 +107,10 @@ export class CanvasService {
     return this.selectedCardSubject.value;
   }
 
+  getSelectedTemplate(): Card | null {
+    return this.selectedTemplateSubject.value;
+  }
+
   private getPlaceholderKeys(html: string): Set<string> {
     const keys = new Set<string>();
     let match;

@@ -36,6 +36,10 @@ export class CardStorageService {
     return this.savedCardsSubject.value.find(c => c.id === id);
   }
 
+  getSavedCards(): Card[] {
+    return this.savedCardsSubject.value;
+  }
+
   private saveToStorage() {
     localStorage.setItem('savedCards', JSON.stringify(this.savedCardsSubject.value));
   }

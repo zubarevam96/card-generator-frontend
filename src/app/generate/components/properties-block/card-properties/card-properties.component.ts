@@ -62,9 +62,9 @@ export class CardPropertiesComponent {
     this.canvasService.updateSelectedVariable(key, this.localVariables[key]);
   }
 
-  saveNewCard() {
+  saveNew() {  // Reworked to save new template only
     if (this.cardName.trim()) {
-      this.canvasService.addCard(this.cardName, this.htmlText);  // Defaults to unlocked, no variables
+      this.cardStorageService.addCard(this.cardName, this.htmlText);
       this.cardName = '';
       this.htmlText = '';
     }
@@ -77,6 +77,13 @@ export class CardPropertiesComponent {
       if (template) {
         this.canvasService.editTemplate(template);
       }
+    }
+  }
+
+  duplicateTemplate() {
+    const template = this.canvasService.getSelectedTemplate();
+    if (template) {
+      this.cardStorageService.addCard(`${template.name} copy`, template.templateHtml, { ...template.variables });
     }
   }
 }
