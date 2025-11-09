@@ -1,18 +1,34 @@
 <div class="templates-block">
     <h3>Templates</h3>
     <button (click)="newTemplate()">New</button>
-    <div *ngFor="let template of templates">
-        <strong>{{ template.name }}</strong>
-        <button (click)="loadTemplate(template)">Load</button>
-        <button (click)="editTemplate(template)">Edit</button>
-        <button (click)="deleteTemplate(template)">Delete</button>
+    <div *ngFor="let template of templates" class="tree-node">
+        <div class="tree-header">
+            <button class="toggle-btn" (click)="toggleExpand(template.id)">
+                {{ isExpanded(template.id) ? '-' : '+' }}
+            </button>
+            <strong>{{ template.name }}</strong>
+            <button class="small-btn" (click)="loadTemplate(template)">Load</button>
+            <button class="small-btn" (click)="editTemplate(template)">Edit</button>
+            <button class="small-btn" (click)="deleteTemplate(template)">Delete</button>
+        </div>
+        <div *ngIf="isExpanded(template.id)" class="tree-children">
+            <div *ngFor="let card of getLinkedCards(template.id)" class="tree-node child-node">
+                <strong>{{ card.name }}</strong>
+                <button class="small-btn" (click)="selectCard(card)">Select</button>
+                <button class="small-btn" (click)="removeCard(card)">Remove</button>
+                <button class="small-btn" *ngIf="!card.isLocked" (click)="saveCardToTemplates(card)">Save to Templates</button>
+            </div>
+            <div *ngIf="getLinkedCards(template.id).length === 0" class="no-children">
+                No linked cards
+            </div>
+        </div>
     </div>
 
-    <h3>Cards</h3>
-    <div *ngFor="let card of cards">
+    <h3>Unlinked Cards</h3>  <!-- For cards without templateId -->
+    <div *ngFor="let card of getUnlinkedCards()">
         <strong>{{ card.name }}</strong>
-        <button (click)="selectCard(card)">Select</button>
-        <button (click)="removeCard(card)">Remove</button>
-        <button *ngIf="!card.isLocked" (click)="saveCardToTemplates(card)">Save to Templates</button>
+        <button class="small-btn" (click)="selectCard(card)">Select</button>
+        <button class="small-btn" (click)="removeCard(card)">Remove</button>
+        <button class="small-btn" *ngIf="!card.isLocked" (click)="saveCardToTemplates(card)">Save to Templates</button>
     </div>
 </div>

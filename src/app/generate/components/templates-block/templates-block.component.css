@@ -1,0 +1,38 @@
+.tree-node {
+    margin-left: 10px;
+}
+
+.tree-header {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.tree-children {
+    margin-left: 20px;
+}
+
+.child-node {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9em;
+}
+
+.toggle-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    padding: 0;
+}
+
+.small-btn {
+    font-size: 0.8em;
+    padding: 2px 6px;
+}
+
+.no-children {
+    font-style: italic;
+    color: gray;
+    margin-left: 20px;
+}

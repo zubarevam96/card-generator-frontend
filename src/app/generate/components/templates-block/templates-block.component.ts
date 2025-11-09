@@ -9,14 +9,36 @@ import { Card } from '../../../models/card.model';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './templates-block.component.html',
+  styleUrls: ['./templates-block.component.css']  // Add if new
 })
 export class TemplatesBlockComponent {
   templates: Card[] = [];
   cards: Card[] = [];
+  expandedTemplates: Set<number> = new Set();  // For expand/collapse
 
   constructor(private canvasService: CanvasService, private cardStorageService: CardStorageService) {
     this.cardStorageService.savedCards$.subscribe((cards: Card[]) => (this.templates = cards));
     this.canvasService.cards$.subscribe((cards: Card[]) => (this.cards = cards));
+  }
+
+  toggleExpand(templateId: number) {
+    if (this.expandedTemplates.has(templateId)) {
+      this.expandedTemplates.delete(templateId);
+    } else {
+      this.expandedTemplates.add(templateId);
+    }
+  }
+
+  isExpanded(templateId: number): boolean {
+    return this.expandedTemplates.has(templateId);
+  }
+
+  getLinkedCards(templateId: number): Card[] {
+    return this.cards.filter(card => card.templateId === templateId);
+  }
+
+  getUnlinkedCards(): Card[] {
+    return this.cards.filter(card => !card.templateId);
   }
 
   loadTemplate(template: Card) {

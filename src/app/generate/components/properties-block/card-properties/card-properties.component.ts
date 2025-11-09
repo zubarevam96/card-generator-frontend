@@ -54,8 +54,9 @@ export class CardPropertiesComponent {
   onNameChange() {
     if (this.isEditingTemplate) {
       this.canvasService.updateTemplateName(this.cardName);
+    } else {
+      this.canvasService.updateSelectedName(this.cardName);
     }
-    // Optionally add for cards: this.canvasService.updateSelectedName(this.cardName);
   }
 
   onVariableChange(key: string) {

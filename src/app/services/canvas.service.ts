@@ -62,6 +62,14 @@ export class CanvasService {
     }
   }
 
+  updateSelectedName(name: string) {
+    const selected = this.selectedCardSubject.value;
+    if (selected) {
+      selected.name = name;
+      this.cardsSubject.next([...this.cardsSubject.value]);
+    }
+  }
+
   showCanvasProperties() {
     this.selectedCardSubject.next(null);
     this.showCanvasPropsSubject.next(true);
