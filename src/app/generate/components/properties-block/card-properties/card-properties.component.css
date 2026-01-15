@@ -31,6 +31,25 @@ input:focus {
   box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
 }
 
+textarea {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  box-sizing: border-box;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 60px;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
+}
+
 .variable-input {
   margin-top: 8px;
 }

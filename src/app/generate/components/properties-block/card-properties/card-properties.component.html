@@ -8,7 +8,12 @@
         <label>Card Variables:</label>
         <div *ngFor="let key of variableKeys" class="variable-input">
             <label>{{ key }}:</label>
-            <input [(ngModel)]="localVariables[key]" (input)="onVariableChange(key)" placeholder="Enter value..." />
+            <textarea 
+                [(ngModel)]="localVariables[key]" 
+                (input)="onVariableChange(key)" 
+                placeholder="Enter value..."
+                rows="3"
+            ></textarea>
         </div>
         <button (click)="editTemplate()">Edit Template</button>
     </ng-container>
