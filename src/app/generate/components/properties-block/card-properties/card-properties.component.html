@@ -15,13 +15,21 @@
 
     <ng-template #variableInputs>
         <label>Template HTML:</label>
-        <textarea
-                [(ngModel)]="htmlText"
-                (input)="onHtmlChange()"
-                rows="8"
-                placeholder="Enter HTML code..."
-        ></textarea>
-        <button (click)="saveNew()">Save as New Template</button>
-        <button (click)="duplicateTemplate()">Duplicate Template</button>
+        <div class="code-editor-wrapper">
+            <pre class="code-input" 
+                contenteditable="true"
+                (input)="onHtmlChange($event)"
+                (paste)="onPaste($event)"
+                (scroll)="syncScroll($event)"
+                spellcheck="false"></pre>
+            <pre class="code-display" 
+                (scroll)="syncScroll($event)">
+                <code [innerHTML]="highlightedCode" class="hljs language-html"></code>
+            </pre>
+        </div>
+        <div class="button-group">
+            <button (click)="saveNew()">Save as New Template</button>
+            <button (click)="duplicateTemplate()">Duplicate Template</button>
+        </div>
     </ng-template>
 </div>
