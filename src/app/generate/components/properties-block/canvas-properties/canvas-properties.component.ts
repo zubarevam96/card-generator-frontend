@@ -33,9 +33,24 @@ export class CanvasPropertiesComponent {
     this.updateCanvas();
   }
 
-  setLetter() {
-    this.canvas.canvasWidth = 612;
-    this.canvas.canvasHeight = 792;
+  setEurogameSmall() {
+    // 41mm × 63mm
+    this.canvas.canvasWidth = 155;
+    this.canvas.canvasHeight = 238;
+    this.updateCanvas();
+  }
+
+  setEurogameMedium() {
+    // 45mm × 68mm
+    this.canvas.canvasWidth = 170;
+    this.canvas.canvasHeight = 257;
+    this.updateCanvas();
+  }
+
+  setEurogameLarge() {
+    // 59mm × 92mm
+    this.canvas.canvasWidth = 223;
+    this.canvas.canvasHeight = 348;
     this.updateCanvas();
   }
 }

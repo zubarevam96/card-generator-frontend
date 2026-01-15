@@ -18,9 +18,16 @@
     </div>
 
     <div class="presets">
+        <h5>Paper Sizes</h5>
         <button (click)="setA4Portrait()">A4 Portrait (595x842)</button>
         <button (click)="setA4Landscape()">A4 Landscape (842x595)</button>
-        <button (click)="setLetter()">Letter (612x792)</button>
+    </div>
+
+    <div class="presets">
+        <h5>Eurogame Card Sizes</h5>
+        <button (click)="setEurogameSmall()">Small (41×63mm / 155×238px)</button>
+        <button (click)="setEurogameMedium()">Medium (45×68mm / 170×257px)</button>
+        <button (click)="setEurogameLarge()">Large (59×92mm / 223×348px)</button>
     </div>
 
     <hr>
