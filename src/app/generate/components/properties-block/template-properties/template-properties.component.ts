@@ -1,12 +1,11 @@
 import { Component, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { CanvasService } from '../../../../services/canvas.service';
 import { CardStorageService } from '../../../../services/card-storage.service';
 import { Template } from '../../../../models/template.model';
 
-declare var hljs: any; // Highlight.js global
+declare var CodeMirror: any; // CodeMirror global
 
 @Component({
   selector: 'app-template-properties',
@@ -16,112 +15,114 @@ declare var hljs: any; // Highlight.js global
   styleUrls: ['./template-properties.component.css']
 })
 export class TemplatePropertiesComponent implements AfterViewInit {
-  htmlText = '';
   templateName = '';
-  highlightedCode: SafeHtml = '';
   selectedTemplate: Template | null = null;
+  private editor: any = null;
 
   constructor(
     private canvasService: CanvasService,
-    private cardStorageService: CardStorageService,
-    private sanitizer: DomSanitizer
+    private cardStorageService: CardStorageService
   ) {
-    this.loadHighlightJs();
+    this.loadCodeMirror();
 
     this.canvasService.selectedTemplate$.subscribe((template: Template | null) => {
       if (template) {
         this.selectedTemplate = template;
-        this.htmlText = template.templateHtml;
         this.templateName = template.name;
-        setTimeout(() => {
-          this.updateHighlight();
-          this.updateCodeInputContent();
-        }, 0);
+        setTimeout(() => this.setEditorContent(template.templateHtml), 0);
       }
     });
   }
 
   ngAfterViewInit() {
-    this.loadHighlightJs();
+    setTimeout(() => this.initializeEditor(), 100);
   }
 
-  private loadHighlightJs() {
-    if ((window as any).hljs) {
+  private loadCodeMirror() {
+    if ((window as any).CodeMirror) {
       return; // Already loaded
     }
+
+    // Load CodeMirror CSS
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css';
+    document.head.appendChild(link);
+
+    // Load HTML mode CSS for better syntax highlighting
+    const modeLink = document.createElement('link');
+    modeLink.rel = 'stylesheet';
+    modeLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/eclipse.min.css';
+    document.head.appendChild(modeLink);
+
+    // Load CodeMirror script
     const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js';
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js';
     script.onload = () => {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css';
-      document.head.appendChild(link);
+      // Load HTML mode
+      const htmlMode = document.createElement('script');
+      htmlMode.src = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js';
+      document.head.appendChild(htmlMode);
     };
     document.head.appendChild(script);
   }
 
-  onHtmlChange(event?: Event) {
-    const editable = event?.target as HTMLElement;
-    if (editable) {
-      this.htmlText = editable.textContent || '';
+  private initializeEditor() {
+    if ((window as any).CodeMirror && !this.editor) {
+      const editorDiv = document.getElementById('code-editor');
+      if (editorDiv) {
+        this.editor = (window as any).CodeMirror(editorDiv, {
+          lineNumbers: true,
+          mode: 'text/html',
+          theme: 'eclipse',
+          indentUnit: 2,
+          indentWithTabs: false,
+          lineWrapping: true,
+          matchBrackets: true,
+          autoCloseTags: true,
+          height: '250px'
+        });
+
+        // Listen for changes
+        this.editor.on('change', () => {
+          const content = this.editor.getValue();
+          this.canvasService.updateTemplateHtml(content);
+        });
+
+        // Set initial content if template is already selected
+        if (this.selectedTemplate) {
+          this.setEditorContent(this.selectedTemplate.templateHtml);
+        }
+      }
     }
-    this.updateHighlight();
-    this.canvasService.updateTemplateHtml(this.htmlText);
+  }
+
+  private setEditorContent(content: string) {
+    if (this.editor) {
+      this.editor.setValue(content);
+    }
   }
 
   onNameChange() {
     this.canvasService.updateTemplateName(this.templateName);
   }
 
-  onPaste(event: ClipboardEvent) {
-    event.preventDefault();
-    const text = event.clipboardData?.getData('text/plain') || '';
-    document.execCommand('insertText', false, text);
-  }
-
-  syncScroll(event: Event) {
-    const source = event.target as HTMLElement;
-    const wrapper = source.parentElement;
-    if (!wrapper) return;
-
-    const input = wrapper.querySelector('.code-input') as HTMLElement;
-    const display = wrapper.querySelector('.code-display') as HTMLElement;
-
-    if (source === input && display) {
-      display.scrollTop = input.scrollTop;
-      display.scrollLeft = input.scrollLeft;
-    } else if (source === display && input) {
-      input.scrollTop = display.scrollTop;
-      input.scrollLeft = display.scrollLeft;
-    }
-  }
-
   saveAsNewTemplate() {
-    if (this.templateName.trim()) {
-      this.cardStorageService.addTemplate(this.templateName, this.htmlText);
+    if (this.templateName.trim() && this.editor) {
+      const content = this.editor.getValue();
+      this.cardStorageService.addTemplate(this.templateName, content);
       this.canvasService.closeTemplateEdit();
-      this.htmlText = '';
       this.templateName = '';
+      if (this.editor) {
+        this.editor.setValue('');
+      }
     }
   }
 
   duplicateTemplate() {
-    if (this.selectedTemplate) {
-      this.cardStorageService.addTemplate(`${this.selectedTemplate.name} copy`, this.selectedTemplate.templateHtml);
-    }
-  }
-
-  private updateHighlight() {
-    if ((window as any).hljs) {
-      const highlighted = (window as any).hljs.highlight(this.htmlText, { language: 'html', ignoreIllegals: true }).value;
-      this.highlightedCode = this.sanitizer.bypassSecurityTrustHtml(highlighted);
-    }
-  }
-
-  private updateCodeInputContent() {
-    const codeInput = document.querySelector('.code-input') as HTMLElement;
-    if (codeInput) {
-      codeInput.textContent = this.htmlText;
+    if (this.selectedTemplate && this.editor) {
+      const content = this.editor.getValue();
+      this.cardStorageService.addTemplate(`${this.selectedTemplate.name} copy`, content);
     }
   }
 }

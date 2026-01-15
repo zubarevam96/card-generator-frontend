@@ -6,18 +6,7 @@
 
     <ng-container *ngIf="selectedTemplate">
         <label>Template HTML:</label>
-        <div class="code-editor-wrapper">
-            <pre class="code-input"
-                contenteditable="true"
-                (input)="onHtmlChange($event)"
-                (paste)="onPaste($event)"
-                (scroll)="syncScroll($event)"
-                spellcheck="false"></pre>
-            <pre class="code-display"
-                (scroll)="syncScroll($event)">
-                <code [innerHTML]="highlightedCode" class="hljs language-html"></code>
-            </pre>
-        </div>
+        <div id="code-editor" class="code-editor"></div>
         <div class="button-group">
             <button (click)="saveAsNewTemplate()">Save as New Template</button>
             <button (click)="duplicateTemplate()">Duplicate Template</button>
