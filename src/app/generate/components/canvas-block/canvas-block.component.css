@@ -61,16 +61,31 @@
 }
 
 /* container spacing between cards (viewport) */
-.canvas-container {
-    /* viewport that fills remaining space in canvas-block */
-    display: block;
+.canvas-pages-container {
+    /* scrollable viewport that holds all pages */
+    display: flex;
+    flex-direction: column;
     padding: 16px;
-    overflow: auto; /* enable scrollbars when canvas-inner is larger */
+    overflow: auto; /* enable scrollbars when pages exceed available space */
     flex: 1; /* take remaining space after header */
+    min-width: 0; /* allow flex container to shrink below content size */
+    max-width: 100%; /* prevent expanding beyond parent */
     border: 1px solid #e0e0e0;
     border-radius: 4px;
     background-color: #fafafa;
-    /* canvas-inner will scroll inside this viewport */
+    gap: 16px; /* spacing between pages */
+}
+
+/* Each page container has fixed canvas dimensions */
+.canvas-container {
+    /* Each page is a fixed-size container matching canvas dimensions */
+    flex-shrink: 0; /* prevent shrinking below canvas dimensions */
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 0; /* No padding - exact canvas dimensions */
+    box-sizing: border-box; /* include border in size */
 }
 
 /* inner canvas with exact canvas dimensions; layout controls (wrap/gap) apply here */
@@ -80,6 +95,8 @@
     align-items: flex-start;
     padding: 0;
     box-sizing: border-box;
+    width: 100%; /* fill the page container width */
+    height: 100%; /* fill the page container height */
 }
 
 /* outer card frame: width/height come from [style.width.px]/[style.height.px] */
@@ -144,12 +161,6 @@
 
 .canvas-block {
     position: relative;  /* Add this to scope the absolute overlay to this container */
-}
-
-.canvas-container {
-    display: flex;
-    flex-wrap: wrap;  /* Assuming cards wrap; adjust if row-only */
-    overflow: auto;  /* Enable scrolling when exceeding max size */
 }
 
 .modal-overlay {

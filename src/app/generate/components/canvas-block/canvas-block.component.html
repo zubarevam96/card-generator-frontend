@@ -4,17 +4,31 @@
         <button class="export-btn" (click)="exportToPdf()" [disabled]="cards.length === 0">Export to PDF</button>
     </div>
 
-    <div class="canvas-container">
-        <div class="canvas-inner" [style.width.px]="canvas.canvasWidth" [style.height.px]="canvas.canvasHeight" [style.gap.px]="canvas.distanceBetweenCards">
+    <!-- Pages wrapper: scrolls vertically to show all pages -->
+    <div class="canvas-pages-container">
+        <!-- Each page is a canvas-container with fixed canvas dimensions -->
+        <div
+            *ngFor="let page of cardPages; let pageIndex = index"
+            class="canvas-container"
+            [style.width.px]="canvas.canvasWidth"
+            [style.height.px]="canvas.canvasHeight"
+        >
             <div
-                    *ngFor="let card of cards"
+                class="canvas-inner"
+                [style.width.px]="canvas.canvasWidth"
+                [style.height.px]="canvas.canvasHeight"
+                [style.gap.px]="canvas.distanceBetweenCards"
+            >
+                <div
+                    *ngFor="let card of page"
                     class="canvas-card"
                     [class.selected]="isSelected(card)"
                     [style.width.px]="canvas.cardWidth"
                     [style.height.px]="canvas.cardHeight"
                     (click)="selectCard(card)"
-            >
-                <div class="card-inner" [innerHTML]="getSafeHtml(card)"></div>
+                >
+                    <div class="card-inner" [innerHTML]="getSafeHtml(card)"></div>
+                </div>
             </div>
         </div>
     </div>
