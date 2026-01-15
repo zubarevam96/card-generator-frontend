@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Card } from '../models/card.model';
+import { Template } from '../models/template.model';
 import { Canvas } from '../models/canvas.model';
 import { CardStorageService } from './card-storage.service';
 
@@ -20,19 +21,28 @@ export class CanvasService {
   private showCanvasPropsSubject = new BehaviorSubject<boolean>(false);
   showCanvasProps$ = this.showCanvasPropsSubject.asObservable();
 
-  private selectedTemplateSubject = new BehaviorSubject<Card | null>(null);
+  private selectedTemplateSubject = new BehaviorSubject<Template | null>(null);
   selectedTemplate$ = this.selectedTemplateSubject.asObservable();
 
   private placeholderRegex = /{{\s*([\w-]+)\s*=\s*(?:"([^"]*)"|\d+)\s*}}/g;
 
-  constructor(private cardStorageService: CardStorageService) {}
+  constructor(private cardStorageService: CardStorageService) {
+    // Load cards from storage on initialization
+    this.cardsSubject.next(this.cardStorageService.getAllCards());
+    
+    // Subscribe to updates from storage
+    this.cardStorageService.cards$.subscribe(cards => {
+      this.cardsSubject.next(cards);
+    });
+  }
 
-  addCard(name: string, templateHtml: string, isLocked: boolean = false, variables: { [key: string]: string } = {}, templateId?: number) {
-    const card = new Card(name, templateHtml, undefined, isLocked, variables, templateId);
-    this.cardsSubject.next([...this.cardsSubject.value, card]);
+  addCard(name: string, templateHtml: string, templateId: number, variables: { [key: string]: string } = {}): Card {
+    const card = this.cardStorageService.addCard(name, templateHtml, templateId, variables);
+    return card;
   }
 
   deleteCard(id: number) {
+    this.cardStorageService.deleteCard(id);
     const current = this.cardsSubject.value.filter(c => c.id !== id);
     this.cardsSubject.next(current);
     if (this.selectedCardSubject.value?.id === id) {
@@ -48,17 +58,19 @@ export class CanvasService {
 
   updateSelectedHtml(html: string) {
     const selected = this.selectedCardSubject.value;
-    if (selected && !selected.isLocked) {
+    if (selected) {
       selected.templateHtml = html;
       this.cardsSubject.next([...this.cardsSubject.value]);
+      this.cardStorageService.updateCard(selected);
     }
   }
 
   updateSelectedVariable(key: string, value: string) {
     const selected = this.selectedCardSubject.value;
-    if (selected && selected.isLocked) {
+    if (selected) {
       selected.variables[key] = value;
       this.cardsSubject.next([...this.cardsSubject.value]);
+      this.cardStorageService.updateCard(selected);
     }
   }
 
@@ -67,6 +79,7 @@ export class CanvasService {
     if (selected) {
       selected.name = name;
       this.cardsSubject.next([...this.cardsSubject.value]);
+      this.cardStorageService.updateCard(selected);
     }
   }
 
@@ -80,7 +93,7 @@ export class CanvasService {
     this.canvasSubject.next(canvas);
   }
 
-  editTemplate(template: Card) {
+  editTemplate(template: Template) {
     this.selectedCardSubject.next(null);
     this.showCanvasPropsSubject.next(false);
     this.selectedTemplateSubject.next(template);
@@ -96,7 +109,7 @@ export class CanvasService {
       const oldHtml = template.templateHtml;
       const oldKeys = this.getPlaceholderKeys(oldHtml);
       template.templateHtml = html;
-      this.cardStorageService.updateCard(template);
+      this.cardStorageService.updateTemplate(template);
       const newKeys = this.getPlaceholderKeys(html);
       this.updateCardsFromTemplate(template, oldKeys, newKeys);
     }
@@ -106,8 +119,7 @@ export class CanvasService {
     const template = this.selectedTemplateSubject.value;
     if (template) {
       template.name = name;
-      this.cardStorageService.updateCard(template);
-      // Optionally update linked card names, but skipping for now as cards have custom names
+      this.cardStorageService.updateTemplate(template);
     }
   }
 
@@ -115,7 +127,7 @@ export class CanvasService {
     return this.selectedCardSubject.value;
   }
 
-  getSelectedTemplate(): Card | null {
+  getSelectedTemplate(): Template | null {
     return this.selectedTemplateSubject.value;
   }
 
@@ -129,7 +141,7 @@ export class CanvasService {
     return keys;
   }
 
-  private updateCardsFromTemplate(template: Card, oldKeys: Set<string>, newKeys: Set<string>) {
+  private updateCardsFromTemplate(template: Template, oldKeys: Set<string>, newKeys: Set<string>) {
     const removed = new Set([...oldKeys].filter(k => !newKeys.has(k)));
     const added = new Set([...newKeys].filter(k => !oldKeys.has(k)));
 
@@ -179,14 +191,16 @@ export class CanvasService {
           }
         }
 
-        return new Card(
+        const updatedCard = new Card(
           card.name,
           newTemplateHtml,
+          card.templateId,
           card.id,
-          card.isLocked,
-          updatedVariables,
-          card.templateId
+          updatedVariables
         );
+        // Persist the updated card
+        this.cardStorageService.updateCard(updatedCard);
+        return updatedCard;
       }
       return card;
     });

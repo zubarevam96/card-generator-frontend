@@ -5,16 +5,14 @@ export class Card {
   name: string;
   templateHtml: string;
   variables: { [key: string]: string };
-  isLocked: boolean;
-  templateId?: number;
+  templateId: number; // Always required for cards - cards must be linked to a template
 
   constructor(
     name: string,
     templateHtml: string,
+    templateId: number,
     id?: number,
-    isLocked: boolean = false,
-    variables: { [key: string]: string } = {},
-    templateId?: number
+    variables: { [key: string]: string } = {}
   ) {
     if (id) {
       this.id = id;
@@ -24,9 +22,8 @@ export class Card {
     }
     this.name = name;
     this.templateHtml = templateHtml;
-    this.isLocked = isLocked;
-    this.variables = variables;
     this.templateId = templateId;
+    this.variables = { ...variables }; // Create a new object to ensure proper reference
   }
 
   get renderedHtml(): string {

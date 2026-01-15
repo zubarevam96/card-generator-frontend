@@ -1,7 +1,7 @@
 <div class="canvas-block">
     <h3 class="canvas-title" (click)="selectCanvas()">Canvas</h3>
 
-    <div class="canvas-container">
+    <div class="canvas-container" [style.max-width.px]="canvas.canvasWidth" [style.max-height.px]="canvas.canvasHeight">
         <div
                 *ngFor="let card of cards"
                 class="canvas-card"

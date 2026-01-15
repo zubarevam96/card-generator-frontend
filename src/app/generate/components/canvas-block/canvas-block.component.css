@@ -91,6 +91,12 @@
     position: relative;  /* Add this to scope the absolute overlay to this container */
 }
 
+.canvas-container {
+    display: flex;
+    flex-wrap: wrap;  /* Assuming cards wrap; adjust if row-only */
+    overflow: auto;  /* Enable scrolling when exceeding max size */
+}
+
 .modal-overlay {
     position: absolute;
     top: 0;

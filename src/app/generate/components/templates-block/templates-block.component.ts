@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { CanvasService } from '../../../services/canvas.service';
 import { CardStorageService } from '../../../services/card-storage.service';
 import { Card } from '../../../models/card.model';
+import { Template } from '../../../models/template.model';
 
 @Component({
   selector: 'app-templates-block',
@@ -12,12 +13,12 @@ import { Card } from '../../../models/card.model';
   styleUrls: ['./templates-block.component.css']  // Add if new
 })
 export class TemplatesBlockComponent {
-  templates: Card[] = [];
+  templates: Template[] = [];
   cards: Card[] = [];
   expandedTemplates: Set<number> = new Set();  // For expand/collapse
 
   constructor(private canvasService: CanvasService, private cardStorageService: CardStorageService) {
-    this.cardStorageService.savedCards$.subscribe((cards: Card[]) => (this.templates = cards));
+    this.cardStorageService.templates$.subscribe((templates: Template[]) => (this.templates = templates));
     this.canvasService.cards$.subscribe((cards: Card[]) => (this.cards = cards));
   }
 
@@ -38,16 +39,21 @@ export class TemplatesBlockComponent {
   }
 
   getUnlinkedCards(): Card[] {
-    return this.cards.filter(card => !card.templateId);
+    return this.cards.filter(card => {
+      // Cards without a valid template are unlinked
+      const template = this.cardStorageService.getTemplateById(card.templateId);
+      return !template;
+    });
   }
 
-  loadTemplate(template: Card) {
+  loadTemplate(template: Template) {
     // Parse placeholders like {{key="default"}}, allowing hyphens in keys
     const placeholderRegex = /{{\s*([\w-]+)\s*=\s*(?:"([^"]*)"|\d+)\s*}}/g;
     const variables: { [key: string]: string } = {};
     let match;
-    let templateHtml = template.templateHtml;
 
+    // Extract variables from template defaults
+    placeholderRegex.lastIndex = 0;
     while ((match = placeholderRegex.exec(template.templateHtml)) !== null) {
       const key = match[1];
       const defaultVal = match[2] ?? match[0].split('=')[1].trim();
@@ -56,29 +62,26 @@ export class TemplatesBlockComponent {
       }
     }
 
-    // Replace {{key="default"}} with {{key}}
-    templateHtml = template.templateHtml.replace(placeholderRegex, '{{$1}}');
+    // Replace {{key="default"}} with {{key}} for the card instance
+    const templateHtml = template.templateHtml.replace(/{{\s*([\w-]+)\s*=\s*(?:"[^"]*"|\d+)\s*}}/g, '{{$1}}');
 
-    // Add the card as locked with variables and templateId
+    // Add the card as linked with variables and templateId
     const copyName = `${template.name} (from template)`;
-    this.canvasService.addCard(copyName, templateHtml, true, variables, template.id);
+    this.canvasService.addCard(copyName, templateHtml, template.id, variables);
   }
 
   newTemplate() {
-    const blankTemplate = new Card('New Template', '', undefined, false, {});
-    this.cardStorageService.addCard(blankTemplate.name, blankTemplate.templateHtml);
-    // Fetch the newly added (with ID) and edit it
-    const newTemplates = this.cardStorageService.getSavedCards();
-    const addedTemplate = newTemplates[newTemplates.length - 1];
-    this.canvasService.editTemplate(addedTemplate);
+    const blankTemplate = this.cardStorageService.addTemplate('New Template', '');
+    // Edit the newly added template
+    this.canvasService.editTemplate(blankTemplate);
   }
 
-  editTemplate(template: Card) {
+  editTemplate(template: Template) {
     this.canvasService.editTemplate(template);
   }
 
-  deleteTemplate(template: Card) {
-    this.cardStorageService.deleteCard(template.id);
+  deleteTemplate(template: Template) {
+    this.cardStorageService.deleteTemplate(template.id);
   }
 
   selectCard(card: Card) {
@@ -89,9 +92,7 @@ export class TemplatesBlockComponent {
     this.canvasService.deleteCard(card.id);
   }
 
-  saveCardToTemplates(card: Card) {
-    if (!card.isLocked) {
-      this.cardStorageService.addCard(card.name, card.templateHtml, card.variables);
-    }
+  saveCardAsTemplate(card: Card) {
+    this.cardStorageService.addTemplate(card.name, card.templateHtml);
   }
 }

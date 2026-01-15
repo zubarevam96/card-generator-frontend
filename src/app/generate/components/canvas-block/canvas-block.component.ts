@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { CanvasService } from '../../../services/canvas.service';
 import { Card } from '../../../models/card.model';
+import { Template } from '../../../models/template.model';
 import { ViewEncapsulation } from '@angular/core';
 import { Canvas } from '../../../models/canvas.model';
 
@@ -18,7 +19,7 @@ export class CanvasBlockComponent {
   cards: Card[] = [];
   selectedCardId: number | null = null;
   canvas: Canvas = new Canvas();
-  selectedTemplate: Card | null = null;
+  selectedTemplate: Template | null = null;
   isEditingTemplate = false;
 
   private placeholderRegex = /{{\s*([\w-]+)\s*=\s*(?:"([^"]*)"|\d+)\s*}}/g;

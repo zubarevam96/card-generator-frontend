@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CanvasService } from '../../../../services/canvas.service';
 import { CardStorageService } from '../../../../services/card-storage.service';
 import { Card } from '../../../../models/card.model';
+import { Template } from '../../../../models/template.model';
 
 @Component({
   selector: 'app-card-properties',
@@ -14,28 +15,32 @@ import { Card } from '../../../../models/card.model';
 export class CardPropertiesComponent {
   htmlText = '';
   cardName = '';
-  isLocked = false;
   localVariables: { [key: string]: string } = {};
   variableKeys: string[] = [];
   isEditingTemplate = false;
+  private placeholderRegex = /{{(\w+)}}/g;
 
   constructor(private canvasService: CanvasService, private cardStorageService: CardStorageService) {
     this.canvasService.selectedCard$.subscribe((card: Card | null) => {
       if (card) {
         this.htmlText = card.renderedHtml;
         this.cardName = card.name;
-        this.isLocked = card.isLocked;
-        this.localVariables = { ...card.variables };
-        this.variableKeys = Object.keys(this.localVariables);
+        // Extract placeholder keys from the template
+        const extractedKeys = this.extractPlaceholderKeys(card.templateHtml);
+        // Initialize variables with existing values or empty strings
+        this.localVariables = {};
+        extractedKeys.forEach(key => {
+          this.localVariables[key] = card.variables[key] || '';
+        });
+        this.variableKeys = extractedKeys;
         this.isEditingTemplate = false;
       }
     });
 
-    this.canvasService.selectedTemplate$.subscribe((template: Card | null) => {
+    this.canvasService.selectedTemplate$.subscribe((template: Template | null) => {
       if (template) {
         this.htmlText = template.templateHtml;
         this.cardName = template.name;
-        this.isLocked = false;  // Always editable for templates
         this.localVariables = {};
         this.variableKeys = [];
         this.isEditingTemplate = true;
@@ -46,8 +51,6 @@ export class CardPropertiesComponent {
   onHtmlChange() {
     if (this.isEditingTemplate) {
       this.canvasService.updateTemplateHtml(this.htmlText);
-    } else if (!this.isLocked) {
-      this.canvasService.updateSelectedHtml(this.htmlText);
     }
   }
 
@@ -63,9 +66,9 @@ export class CardPropertiesComponent {
     this.canvasService.updateSelectedVariable(key, this.localVariables[key]);
   }
 
-  saveNew() {  // Reworked to save new template only
+  saveNew() {  // Save current template as a new template
     if (this.cardName.trim()) {
-      this.cardStorageService.addCard(this.cardName, this.htmlText);
+      this.cardStorageService.addTemplate(this.cardName, this.htmlText);
       this.cardName = '';
       this.htmlText = '';
     }
@@ -73,7 +76,7 @@ export class CardPropertiesComponent {
 
   editTemplate() {
     const selectedCard = this.canvasService.getSelectedCard();
-    if (selectedCard && selectedCard.templateId) {
+    if (selectedCard) {
       const template = this.cardStorageService.getTemplateById(selectedCard.templateId);
       if (template) {
         this.canvasService.editTemplate(template);
@@ -84,7 +87,17 @@ export class CardPropertiesComponent {
   duplicateTemplate() {
     const template = this.canvasService.getSelectedTemplate();
     if (template) {
-      this.cardStorageService.addCard(`${template.name} copy`, template.templateHtml, { ...template.variables });
+      this.cardStorageService.addTemplate(`${template.name} copy`, template.templateHtml);
     }
+  }
+
+  private extractPlaceholderKeys(html: string): string[] {
+    const keys = new Set<string>();
+    let match;
+    this.placeholderRegex.lastIndex = 0;
+    while ((match = this.placeholderRegex.exec(html)) !== null) {
+      keys.add(match[1]);
+    }
+    return Array.from(keys);
   }
 }

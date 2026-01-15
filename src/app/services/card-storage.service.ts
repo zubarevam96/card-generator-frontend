@@ -1,54 +1,184 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Card } from '../models/card.model';
+import { Template } from '../models/template.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CardStorageService {
-  private savedCardsSubject = new BehaviorSubject<Card[]>(this.loadFromStorage());
-  savedCards$ = this.savedCardsSubject.asObservable();
+  private migrationDone = false;
+  
+  private templatesSubject = new BehaviorSubject<Template[]>(this.loadTemplatesFromStorage());
+  templates$ = this.templatesSubject.asObservable();
 
-  addCard(name: string, templateHtml: string, variables: { [key: string]: string } = {}) {
-    const card = new Card(name, templateHtml, undefined, false, variables);
-    const current = this.savedCardsSubject.value;
-    this.savedCardsSubject.next([...current, card]);
-    this.saveToStorage();
+  private cardsSubject = new BehaviorSubject<Card[]>(this.loadCardsFromStorage());
+  cards$ = this.cardsSubject.asObservable();
+
+  // For backward compatibility
+  get savedCards$() {
+    return this.templates$;
+  }
+
+  // Add a new template
+  addTemplate(name: string, templateHtml: string): Template {
+    console.log('[CardStorageService] addTemplate called:', name);
+    const template = new Template(name, templateHtml);
+    const current = this.templatesSubject.value;
+    this.templatesSubject.next([...current, template]);
+    this.saveTemplatesToStorage();
+    return template;
+  }
+
+  // Add a new card
+  addCard(name: string, templateHtml: string, templateId: number, variables: { [key: string]: string } = {}): Card {
+    console.log('[CardStorageService] addCard called:', name, 'templateId:', templateId);
+    const card = new Card(name, templateHtml, templateId, undefined, variables);
+    const current = this.cardsSubject.value;
+    this.cardsSubject.next([...current, card]);
+    this.saveCardsToStorage();
+    return card;
+  }
+
+  deleteTemplate(id: number) {
+    const current = this.templatesSubject.value.filter(t => t.id !== id);
+    this.templatesSubject.next(current);
+    this.saveTemplatesToStorage();
   }
 
   deleteCard(id: number) {
-    const current = this.savedCardsSubject.value.filter(c => c.id !== id);
-    this.savedCardsSubject.next(current);
-    this.saveToStorage();
+    const current = this.cardsSubject.value.filter(c => c.id !== id);
+    this.cardsSubject.next(current);
+    this.saveCardsToStorage();
+  }
+
+  updateTemplate(updatedTemplate: Template) {
+    const current = this.templatesSubject.value.map(t =>
+      t.id === updatedTemplate.id
+        ? new Template(updatedTemplate.name, updatedTemplate.templateHtml, updatedTemplate.id, updatedTemplate.variables)
+        : t
+    );
+    this.templatesSubject.next(current);
+    this.saveTemplatesToStorage();
   }
 
   updateCard(updatedCard: Card) {
-    const current = this.savedCardsSubject.value.map(c =>
+    const current = this.cardsSubject.value.map(c =>
       c.id === updatedCard.id
-        ? new Card(updatedCard.name, updatedCard.templateHtml, updatedCard.id, updatedCard.isLocked, updatedCard.variables, updatedCard.templateId)
+        ? new Card(updatedCard.name, updatedCard.templateHtml, updatedCard.templateId, updatedCard.id, updatedCard.variables)
         : c
     );
-    this.savedCardsSubject.next(current);
-    this.saveToStorage();
+    this.cardsSubject.next(current);
+    this.saveCardsToStorage();
   }
 
-  getTemplateById(id: number): Card | undefined {
-    return this.savedCardsSubject.value.find(c => c.id === id);
+  getTemplateById(id: number): Template | undefined {
+    return this.templatesSubject.value.find(t => t.id === id);
   }
 
-  getSavedCards(): Card[] {
-    return this.savedCardsSubject.value;
+  getCardById(id: number): Card | undefined {
+    return this.cardsSubject.value.find(c => c.id === id);
   }
 
-  private saveToStorage() {
-    localStorage.setItem('savedCards', JSON.stringify(this.savedCardsSubject.value));
+  getSavedCards(): Template[] {
+    return this.templatesSubject.value;
   }
 
-  private loadFromStorage(): Card[] {
-    const stored = localStorage.getItem('savedCards');
+  getAllCards(): Card[] {
+    return this.cardsSubject.value;
+  }
+
+  clearAllStorage() {
+    localStorage.removeItem('savedTemplates');
+    localStorage.removeItem('savedCards');
+    this.templatesSubject.next([]);
+    this.cardsSubject.next([]);
+  }
+
+  debugLogStorage() {
+    console.log('Templates:', this.templatesSubject.value);
+    console.log('Cards:', this.cardsSubject.value);
+    console.log('localStorage.savedTemplates:', localStorage.getItem('savedTemplates'));
+    console.log('localStorage.savedCards:', localStorage.getItem('savedCards'));
+  }
+
+  private saveTemplatesToStorage() {
+    localStorage.setItem('savedTemplates', JSON.stringify(this.templatesSubject.value));
+  }
+
+  private saveCardsToStorage() {
+    localStorage.setItem('savedCards', JSON.stringify(this.cardsSubject.value));
+  }
+
+  private migrateOldData() {
+    if (this.migrationDone) return;
+    this.migrationDone = true;
+
+    const oldSavedCards = localStorage.getItem('savedCards');
+    const hasNewFormat = localStorage.getItem('savedTemplates') !== null;
+
+    console.log('[Migration] oldSavedCards exists:', !!oldSavedCards, 'hasNewFormat:', hasNewFormat);
+
+    if (oldSavedCards && !hasNewFormat) {
+      // Old format exists, migrate it
+      console.log('[Migration] Migrating old format...');
+      const parsed = JSON.parse(oldSavedCards);
+      const templates: Template[] = [];
+      const cards: Card[] = [];
+
+      parsed.forEach((item: any) => {
+        console.log('[Migration] Processing item:', item.name, 'isLocked:', item.isLocked, 'templateId:', item.templateId);
+        // Old items with isLocked: false and no templateId are templates
+        // Old items with isLocked: true OR items with templateId are cards
+        if (item.isLocked === false && !item.templateId) {
+          // This is a template
+          console.log('[Migration] -> Treated as template');
+          templates.push(new Template(item.name, item.templateHtml, item.id, item.variables || {}));
+        } else if (item.templateId || item.isLocked === true) {
+          // This is a card with a template reference
+          console.log('[Migration] -> Treated as card with templateId:', item.templateId);
+          cards.push(new Card(item.name, item.templateHtml, item.templateId, item.id, item.variables || {}));
+        }
+      });
+
+      console.log('[Migration] Migrated templates:', templates.length, 'cards:', cards.length);
+
+      // Save migrated data to new keys
+      if (templates.length > 0) {
+        localStorage.setItem('savedTemplates', JSON.stringify(templates));
+      }
+      // Delete old format
+      localStorage.removeItem('savedCards');
+      
+      // Save cards to new key if any exist
+      if (cards.length > 0) {
+        localStorage.setItem('savedCards', JSON.stringify(cards));
+      }
+    }
+  }
+
+  private loadTemplatesFromStorage(): Template[] {
+    this.migrateOldData();
+    
+    const stored = localStorage.getItem('savedTemplates');
+    console.log('[LoadTemplates] stored templates:', !!stored);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return parsed.map((c: any) => new Card(c.name, c.templateHtml || c.html, c.id, c.isLocked, c.variables || {}, c.templateId));
+      console.log('[LoadTemplates] Loaded templates count:', parsed.length);
+      return parsed.map((t: any) => new Template(t.name, t.templateHtml, t.id, t.variables || {}));
+    }
+    return [];
+  }
+
+  private loadCardsFromStorage(): Card[] {
+    this.migrateOldData();
+    
+    const stored = localStorage.getItem('savedCards');
+    console.log('[LoadCards] stored cards:', !!stored);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      console.log('[LoadCards] Loaded cards count:', parsed.length);
+      return parsed.map((c: any) => new Card(c.name, c.templateHtml, c.templateId, c.id, c.variables || {}));
     }
     return [];
   }

@@ -16,7 +16,6 @@
                 <strong>{{ card.name }}</strong>
                 <button class="small-btn" (click)="selectCard(card)">Select</button>
                 <button class="small-btn" (click)="removeCard(card)">Remove</button>
-                <button class="small-btn" *ngIf="!card.isLocked" (click)="saveCardToTemplates(card)">Save to Templates</button>
             </div>
             <div *ngIf="getLinkedCards(template.id).length === 0" class="no-children">
                 No linked cards
@@ -24,11 +23,11 @@
         </div>
     </div>
 
-    <h3>Unlinked Cards</h3>  <!-- For cards without templateId -->
+    <h3>Unlinked Cards</h3>
     <div *ngFor="let card of getUnlinkedCards()">
         <strong>{{ card.name }}</strong>
         <button class="small-btn" (click)="selectCard(card)">Select</button>
         <button class="small-btn" (click)="removeCard(card)">Remove</button>
-        <button class="small-btn" *ngIf="!card.isLocked" (click)="saveCardToTemplates(card)">Save to Templates</button>
+        <button class="small-btn" (click)="saveCardAsTemplate(card)">Save as Template</button>
     </div>
 </div>
