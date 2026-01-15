@@ -39,6 +39,89 @@
     cursor: pointer;
 }
 
+/* Canvas tabs */
+.canvas-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f5f5f5;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.canvas-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.canvas-tab:hover {
+    background-color: #f9f9f9;
+    border-color: #999;
+}
+
+.canvas-tab.active {
+    background-color: #e3f2fd;
+    border-color: #2196f3;
+    font-weight: 500;
+}
+
+.tab-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+}
+
+.tab-btn {
+    padding: 2px 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: #666;
+    transition: color 0.2s;
+}
+
+.tab-btn:hover {
+    color: #000;
+}
+
+.tab-btn.delete:hover {
+    color: #d32f2f;
+}
+
+.tab-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.add-canvas-btn {
+    padding: 6px 10px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.add-canvas-btn:hover {
+    background-color: #45a049;
+}
+
 .export-btn {
     padding: 8px 16px;
     background-color: #28a745;

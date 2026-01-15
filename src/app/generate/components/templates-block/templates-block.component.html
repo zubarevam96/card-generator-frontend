@@ -1,7 +1,7 @@
 <div class="templates-block">
     <h3>Templates</h3>
     <button (click)="newTemplate()">New</button>
-    <div *ngFor="let template of templates" class="tree-node">
+    <div *ngFor="let template of getTemplatesForCanvas()" class="tree-node">
         <div class="tree-header">
             <button class="toggle-btn" (click)="toggleExpand(template.id)">
                 {{ isExpanded(template.id) ? '-' : '+' }}

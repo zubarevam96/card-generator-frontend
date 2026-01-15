@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Card } from '../models/card.model';
 import { Template } from '../models/template.model';
+import { Canvas } from '../models/canvas.model';
 
 @Injectable({
   providedIn: 'root'
@@ -9,6 +10,9 @@ import { Template } from '../models/template.model';
 export class CardStorageService {
   private migrationDone = false;
   
+  private canvasesSubject = new BehaviorSubject<Canvas[]>(this.loadCanvasesFromStorage());
+  canvases$ = this.canvasesSubject.asObservable();
+
   private templatesSubject = new BehaviorSubject<Template[]>(this.loadTemplatesFromStorage());
   templates$ = this.templatesSubject.asObservable();
 
@@ -21,9 +25,9 @@ export class CardStorageService {
   }
 
   // Add a new template
-  addTemplate(name: string, templateHtml: string): Template {
+  addTemplate(name: string, templateHtml: string, canvasId: number): Template {
     console.log('[CardStorageService] addTemplate called:', name);
-    const template = new Template(name, templateHtml);
+    const template = new Template(name, templateHtml, canvasId);
     const current = this.templatesSubject.value;
     this.templatesSubject.next([...current, template]);
     this.saveTemplatesToStorage();
@@ -31,9 +35,9 @@ export class CardStorageService {
   }
 
   // Add a new card
-  addCard(name: string, templateHtml: string, templateId: number, variables: { [key: string]: string } = {}): Card {
-    console.log('[CardStorageService] addCard called:', name, 'templateId:', templateId);
-    const card = new Card(name, templateHtml, templateId, undefined, variables);
+  addCard(name: string, templateHtml: string, templateId: number, variables: { [key: string]: string } = {}, canvasId: number = 1): Card {
+    console.log('[CardStorageService] addCard called:', name, 'templateId:', templateId, 'canvasId:', canvasId);
+    const card = new Card(name, templateHtml, templateId, undefined, variables, canvasId);
     const current = this.cardsSubject.value;
     this.cardsSubject.next([...current, card]);
     this.saveCardsToStorage();
@@ -55,7 +59,7 @@ export class CardStorageService {
   updateTemplate(updatedTemplate: Template) {
     const current = this.templatesSubject.value.map(t =>
       t.id === updatedTemplate.id
-        ? new Template(updatedTemplate.name, updatedTemplate.templateHtml, updatedTemplate.id, updatedTemplate.variables)
+        ? new Template(updatedTemplate.name, updatedTemplate.templateHtml, updatedTemplate.canvasId, updatedTemplate.id, updatedTemplate.variables)
         : t
     );
     this.templatesSubject.next(current);
@@ -65,7 +69,7 @@ export class CardStorageService {
   updateCard(updatedCard: Card) {
     const current = this.cardsSubject.value.map(c =>
       c.id === updatedCard.id
-        ? new Card(updatedCard.name, updatedCard.templateHtml, updatedCard.templateId, updatedCard.id, updatedCard.variables)
+        ? new Card(updatedCard.name, updatedCard.templateHtml, updatedCard.templateId, updatedCard.id, updatedCard.variables, updatedCard.canvasId)
         : c
     );
     this.cardsSubject.next(current);
@@ -100,14 +104,6 @@ export class CardStorageService {
     console.log('Cards:', this.cardsSubject.value);
     console.log('localStorage.savedTemplates:', localStorage.getItem('savedTemplates'));
     console.log('localStorage.savedCards:', localStorage.getItem('savedCards'));
-  }
-
-  private saveTemplatesToStorage() {
-    localStorage.setItem('savedTemplates', JSON.stringify(this.templatesSubject.value));
-  }
-
-  private saveCardsToStorage() {
-    localStorage.setItem('savedCards', JSON.stringify(this.cardsSubject.value));
   }
 
   private migrateOldData() {
@@ -165,7 +161,7 @@ export class CardStorageService {
     if (stored) {
       const parsed = JSON.parse(stored);
       console.log('[LoadTemplates] Loaded templates count:', parsed.length);
-      return parsed.map((t: any) => new Template(t.name, t.templateHtml, t.id, t.variables || {}));
+      return parsed.map((t: any) => new Template(t.name, t.templateHtml, t.canvasId ?? 1, t.id, t.variables || {}));
     }
     return [];
   }
@@ -178,8 +174,42 @@ export class CardStorageService {
     if (stored) {
       const parsed = JSON.parse(stored);
       console.log('[LoadCards] Loaded cards count:', parsed.length);
-      return parsed.map((c: any) => new Card(c.name, c.templateHtml, c.templateId, c.id, c.variables || {}));
+      return parsed.map((c: any) => new Card(c.name, c.templateHtml, c.templateId, c.id, c.variables || {}, c.canvasId ?? 1));
     }
     return [];
+  }
+
+  // Canvas storage methods
+  getCanvases(): Canvas[] {
+    return this.canvasesSubject.value;
+  }
+
+  saveCanvases(canvases: Canvas[]) {
+    this.canvasesSubject.next(canvases);
+    localStorage.setItem('savedCanvases', JSON.stringify(canvases));
+  }
+
+  private loadCanvasesFromStorage(): Canvas[] {
+    const stored = localStorage.getItem('savedCanvases');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return parsed.map((c: any) => new Canvas(c.name, c.cardWidth, c.cardHeight, c.canvasWidth, c.canvasHeight, c.distanceBetweenCards, c.id));
+    }
+    // Return default canvas if none exist
+    return [new Canvas('Canvas 1')];
+  }
+
+  deleteCardsByCanvas(canvasId: number) {
+    const current = this.cardsSubject.value.filter(c => c.canvasId !== canvasId);
+    this.cardsSubject.next(current);
+    this.saveCardsToStorage();
+  }
+
+  private saveCardsToStorage() {
+    localStorage.setItem('savedCards', JSON.stringify(this.cardsSubject.value));
+  }
+
+  private saveTemplatesToStorage() {
+    localStorage.setItem('savedTemplates', JSON.stringify(this.templatesSubject.value));
   }
 }

@@ -16,10 +16,16 @@ export class TemplatesBlockComponent {
   templates: Template[] = [];
   cards: Card[] = [];
   expandedTemplates: Set<number> = new Set();  // For expand/collapse
+  selectedCanvasId: number = 1;
 
   constructor(private canvasService: CanvasService, private cardStorageService: CardStorageService) {
     this.cardStorageService.templates$.subscribe((templates: Template[]) => (this.templates = templates));
     this.canvasService.cards$.subscribe((cards: Card[]) => (this.cards = cards));
+    this.canvasService.selectedCanvas$.subscribe(canvas => (this.selectedCanvasId = canvas.id));
+  }
+
+  getTemplatesForCanvas(): Template[] {
+    return this.templates.filter(t => t.canvasId === this.selectedCanvasId);
   }
 
   toggleExpand(templateId: number) {
@@ -71,7 +77,7 @@ export class TemplatesBlockComponent {
   }
 
   newTemplate() {
-    const blankTemplate = this.cardStorageService.addTemplate('New Template', '');
+    const blankTemplate = this.cardStorageService.addTemplate('New Template', '', this.selectedCanvasId);
     // Edit the newly added template
     this.canvasService.editTemplate(blankTemplate);
   }
@@ -93,6 +99,6 @@ export class TemplatesBlockComponent {
   }
 
   saveCardAsTemplate(card: Card) {
-    this.cardStorageService.addTemplate(card.name, card.templateHtml);
+    this.cardStorageService.addTemplate(card.name, card.templateHtml, this.selectedCanvasId);
   }
 }

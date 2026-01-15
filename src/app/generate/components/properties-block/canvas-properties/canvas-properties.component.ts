@@ -35,22 +35,22 @@ export class CanvasPropertiesComponent {
 
   setEurogameSmall() {
     // 41mm × 63mm
-    this.canvas.canvasWidth = 155;
-    this.canvas.canvasHeight = 238;
+    this.canvas.cardWidth = 155;
+    this.canvas.cardHeight = 238;
     this.updateCanvas();
   }
 
   setEurogameMedium() {
     // 45mm × 68mm
-    this.canvas.canvasWidth = 170;
-    this.canvas.canvasHeight = 257;
+    this.canvas.cardWidth = 170;
+    this.canvas.cardHeight = 257;
     this.updateCanvas();
   }
 
   setEurogameLarge() {
     // 59mm × 92mm
-    this.canvas.canvasWidth = 223;
-    this.canvas.canvasHeight = 348;
+    this.canvas.cardWidth = 223;
+    this.canvas.cardHeight = 348;
     this.updateCanvas();
   }
 }

@@ -17,6 +17,7 @@ declare var CodeMirror: any; // CodeMirror global
 export class TemplatePropertiesComponent implements AfterViewInit {
   templateName = '';
   selectedTemplate: Template | null = null;
+  selectedCanvasId: number = 1;
   private editor: any = null;
 
   constructor(
@@ -32,6 +33,8 @@ export class TemplatePropertiesComponent implements AfterViewInit {
         setTimeout(() => this.setEditorContent(template.templateHtml), 0);
       }
     });
+
+    this.canvasService.selectedCanvas$.subscribe(canvas => (this.selectedCanvasId = canvas.id));
   }
 
   ngAfterViewInit() {
@@ -110,7 +113,7 @@ export class TemplatePropertiesComponent implements AfterViewInit {
   saveAsNewTemplate() {
     if (this.templateName.trim() && this.editor) {
       const content = this.editor.getValue();
-      this.cardStorageService.addTemplate(this.templateName, content);
+      this.cardStorageService.addTemplate(this.templateName, content, this.selectedCanvasId);
       this.canvasService.closeTemplateEdit();
       this.templateName = '';
       if (this.editor) {
@@ -122,7 +125,7 @@ export class TemplatePropertiesComponent implements AfterViewInit {
   duplicateTemplate() {
     if (this.selectedTemplate && this.editor) {
       const content = this.editor.getValue();
-      this.cardStorageService.addTemplate(`${this.selectedTemplate.name} copy`, content);
+      this.cardStorageService.addTemplate(`${this.selectedTemplate.name} copy`, content, this.selectedCanvasId);
     }
   }
 }

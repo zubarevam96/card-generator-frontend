@@ -9,13 +9,19 @@ import { CardStorageService } from './card-storage.service';
   providedIn: 'root'
 })
 export class CanvasService {
+  private canvasesSubject = new BehaviorSubject<Canvas[]>([new Canvas('Canvas 1')]);
+  canvases$ = this.canvasesSubject.asObservable();
+
+  private selectedCanvasSubject = new BehaviorSubject<Canvas>(this.canvasesSubject.value[0]);
+  selectedCanvas$ = this.selectedCanvasSubject.asObservable();
+
   private cardsSubject = new BehaviorSubject<Card[]>([]);
   cards$ = this.cardsSubject.asObservable();
 
   private selectedCardSubject = new BehaviorSubject<Card | null>(null);
   selectedCard$ = this.selectedCardSubject.asObservable();
 
-  private canvasSubject = new BehaviorSubject<Canvas>(new Canvas());
+  private canvasSubject = new BehaviorSubject<Canvas>(this.canvasesSubject.value[0]);
   canvas$ = this.canvasSubject.asObservable();
 
   private showCanvasPropsSubject = new BehaviorSubject<boolean>(false);
@@ -27,8 +33,21 @@ export class CanvasService {
   private placeholderRegex = /{{\s*([\w-]+)\s*=\s*(?:"([^"]*)"|\d+)\s*}}/g;
 
   constructor(private cardStorageService: CardStorageService) {
-    // Load cards from storage on initialization
-    this.cardsSubject.next(this.cardStorageService.getAllCards());
+    // Load canvases and cards from storage on initialization
+    const storedCanvases = this.cardStorageService.getCanvases();
+    if (storedCanvases.length > 0) {
+      this.canvasesSubject.next(storedCanvases);
+      this.selectedCanvasSubject.next(storedCanvases[0]);
+      this.canvasSubject.next(storedCanvases[0]);
+    }
+    
+    this.loadCardsForCanvas(this.selectedCanvasSubject.value);
+    
+    // Subscribe to canvas selection changes
+    this.selectedCanvasSubject.subscribe(canvas => {
+      this.canvasSubject.next(canvas);
+      this.loadCardsForCanvas(canvas);
+    });
     
     // Subscribe to updates from storage
     this.cardStorageService.cards$.subscribe(cards => {
@@ -36,8 +55,16 @@ export class CanvasService {
     });
   }
 
+  private loadCardsForCanvas(canvas: Canvas) {
+    const allCards = this.cardStorageService.getAllCards();
+    const canvasCards = allCards.filter(card => card.canvasId === canvas.id);
+    this.cardsSubject.next(canvasCards);
+    this.selectedCardSubject.next(null);
+  }
+
   addCard(name: string, templateHtml: string, templateId: number, variables: { [key: string]: string } = {}): Card {
-    const card = this.cardStorageService.addCard(name, templateHtml, templateId, variables);
+    const canvasId = this.selectedCanvasSubject.value.id;
+    const card = this.cardStorageService.addCard(name, templateHtml, templateId, variables, canvasId);
     return card;
   }
 
@@ -90,7 +117,12 @@ export class CanvasService {
   }
 
   updateCanvas(canvas: Canvas) {
-    this.canvasSubject.next(canvas);
+    const updated = { ...canvas };
+    const canvases = this.canvasesSubject.value.map(c => c.id === updated.id ? updated : c);
+    this.canvasesSubject.next(canvases);
+    this.selectedCanvasSubject.next(updated);
+    this.canvasSubject.next(updated);
+    this.cardStorageService.saveCanvases(canvases);
   }
 
   editTemplate(template: Template) {
@@ -206,5 +238,57 @@ export class CanvasService {
     });
 
     this.cardsSubject.next(currentCards);
+  }
+
+  // Canvas management methods
+  getCanvases(): Canvas[] {
+    return this.canvasesSubject.value;
+  }
+
+  selectCanvas(canvas: Canvas) {
+    this.selectedCanvasSubject.next(canvas);
+  }
+
+  addCanvas(name: string = 'New Canvas'): Canvas {
+    const newCanvas = new Canvas(name);
+    const canvases = [...this.canvasesSubject.value, newCanvas];
+    this.canvasesSubject.next(canvases);
+    this.cardStorageService.saveCanvases(canvases);
+    return newCanvas;
+  }
+
+  deleteCanvas(canvasId: number) {
+    const canvases = this.canvasesSubject.value.filter(c => c.id !== canvasId);
+    if (canvases.length === 0) {
+      // Always keep at least one canvas
+      const defaultCanvas = new Canvas('Canvas 1');
+      this.canvasesSubject.next([defaultCanvas]);
+      this.selectedCanvasSubject.next(defaultCanvas);
+      this.cardStorageService.saveCanvases([defaultCanvas]);
+    } else {
+      this.canvasesSubject.next(canvases);
+      if (this.selectedCanvasSubject.value.id === canvasId) {
+        this.selectedCanvasSubject.next(canvases[0]);
+      }
+      this.cardStorageService.saveCanvases(canvases);
+    }
+    // Delete all cards for this canvas
+    this.cardStorageService.deleteCardsByCanvas(canvasId);
+  }
+
+  renameCanvas(canvasId: number, newName: string) {
+    const canvases = this.canvasesSubject.value.map(c => {
+      if (c.id === canvasId) {
+        c.name = newName;
+      }
+      return c;
+    });
+    this.canvasesSubject.next(canvases);
+    this.cardStorageService.saveCanvases(canvases);
+    
+    // Update selected canvas if it's the one being renamed
+    if (this.selectedCanvasSubject.value.id === canvasId) {
+      this.selectedCanvasSubject.next(this.selectedCanvasSubject.value);
+    }
   }
 }

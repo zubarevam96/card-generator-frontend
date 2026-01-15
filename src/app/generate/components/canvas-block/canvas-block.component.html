@@ -4,6 +4,30 @@
         <button class="export-btn" (click)="exportToPdf()" [disabled]="cards.length === 0">Export to PDF</button>
     </div>
 
+    <!-- Canvas tabs -->
+    <div class="canvas-tabs">
+        <div
+            *ngFor="let cv of canvases"
+            class="canvas-tab"
+            [class.active]="cv.id === canvas.id"
+            (click)="switchCanvas(cv)"
+        >
+            <span class="tab-name">{{ cv.name }}</span>
+            <button
+                class="tab-btn"
+                (click)="renameCanvas(cv.id); $event.stopPropagation()"
+                title="Rename"
+            >✎</button>
+            <button
+                class="tab-btn delete"
+                (click)="deleteCanvas(cv.id); $event.stopPropagation()"
+                title="Delete"
+                [disabled]="canvases.length === 1"
+            >✕</button>
+        </div>
+        <button class="add-canvas-btn" (click)="addNewCanvas()" title="Add new canvas">+</button>
+    </div>
+
     <!-- Pages wrapper: scrolls vertically to show all pages -->
     <div class="canvas-pages-container">
         <!-- Each page is a canvas-container with fixed canvas dimensions -->

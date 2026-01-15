@@ -20,6 +20,7 @@ export class CanvasBlockComponent {
   cards: Card[] = [];
   selectedCardId: number | null = null;
   canvas: Canvas = new Canvas();
+  canvases: Canvas[] = [];
   selectedTemplate: Template | null = null;
   isEditingTemplate = false;
   cardPages: Card[][] = []; // Array of card arrays, one array per page
@@ -27,6 +28,13 @@ export class CanvasBlockComponent {
   private placeholderRegex = /{{\s*([\w-]+)\s*=\s*(?:"([^"]*)"|\d+)\s*}}/g;
 
   constructor(private canvasService: CanvasService, private sanitizer: DomSanitizer, private pdfExportService: PdfExportService) {
+    this.canvasService.canvases$.subscribe(canvases => {
+      this.canvases = canvases;
+    });
+    this.canvasService.selectedCanvas$.subscribe(canvas => {
+      this.canvas = canvas;
+      this.updateCardPages();
+    });
     this.canvasService.cards$.subscribe(cards => {
       this.cards = cards;
       this.updateCardPages();
@@ -119,6 +127,34 @@ export class CanvasBlockComponent {
   closeModal(event: MouseEvent) {
     if ((event.target as HTMLElement).classList.contains('modal-overlay')) {
       this.canvasService.closeTemplateEdit();
+    }
+  }
+
+  switchCanvas(canvas: Canvas) {
+    this.canvasService.selectCanvas(canvas);
+  }
+
+  addNewCanvas() {
+    this.canvasService.addCanvas();
+  }
+
+  deleteCanvas(canvasId: number) {
+    if (this.canvases.length <= 1) {
+      alert('Cannot delete the only canvas');
+      return;
+    }
+    if (confirm('Delete this canvas and all its cards?')) {
+      this.canvasService.deleteCanvas(canvasId);
+    }
+  }
+
+  renameCanvas(canvasId: number) {
+    const canvas = this.canvases.find(c => c.id === canvasId);
+    if (canvas) {
+      const newName = prompt('Enter new name:', canvas.name);
+      if (newName && newName.trim()) {
+        this.canvasService.renameCanvas(canvasId, newName.trim());
+      }
     }
   }
 

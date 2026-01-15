@@ -6,13 +6,15 @@ export class Card {
   templateHtml: string;
   variables: { [key: string]: string };
   templateId: number; // Always required for cards - cards must be linked to a template
+  canvasId: number; // Canvas this card belongs to
 
   constructor(
     name: string,
     templateHtml: string,
     templateId: number,
     id?: number,
-    variables: { [key: string]: string } = {}
+    variables: { [key: string]: string } = {},
+    canvasId: number = 1
   ) {
     if (id) {
       this.id = id;
@@ -23,6 +25,7 @@ export class Card {
     this.name = name;
     this.templateHtml = templateHtml;
     this.templateId = templateId;
+    this.canvasId = canvasId;
     this.variables = { ...variables }; // Create a new object to ensure proper reference
   }
 

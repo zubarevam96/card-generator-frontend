@@ -45,17 +45,23 @@
 .presets {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin: 12px 0;
+    gap: 6px;
+    margin: 10px 0;
+}
+
+.presets h5 {
+    margin: 0;
+    font-size: 13px;
+    color: #555;
 }
 
 .presets button {
-    padding: 8px 12px;
+    padding: 6px 10px;
     background-color: #e9ecef;
     border: 1px solid #dee2e6;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     transition: background-color 0.2s;
 }
@@ -66,6 +72,12 @@
 
 .presets button:active {
     background-color: #ced4da;
+}
+
+.card-presets .preset-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
 hr {
