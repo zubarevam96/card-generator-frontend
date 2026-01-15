@@ -1,35 +1,21 @@
 <div class="card-properties">
     <h3>Card Properties</h3>
 
-    <label>Card Name:</label>
-    <input [(ngModel)]="cardName" (input)="onNameChange()" placeholder="Card name" />
+    <ng-container *ngIf="variableKeys.length > 0; else noCard">
+        <label>Card Name:</label>
+        <input [(ngModel)]="cardName" (input)="onNameChange()" placeholder="Card name" />
 
-    <ng-container *ngIf="!isEditingTemplate; else variableInputs">
         <label>Card Variables:</label>
-        <div *ngFor="let key of variableKeys">
+        <div *ngFor="let key of variableKeys" class="variable-input">
             <label>{{ key }}:</label>
             <input [(ngModel)]="localVariables[key]" (input)="onVariableChange(key)" placeholder="Enter value..." />
         </div>
         <button (click)="editTemplate()">Edit Template</button>
     </ng-container>
 
-    <ng-template #variableInputs>
-        <label>Template HTML:</label>
-        <div class="code-editor-wrapper">
-            <pre class="code-input" 
-                contenteditable="true"
-                (input)="onHtmlChange($event)"
-                (paste)="onPaste($event)"
-                (scroll)="syncScroll($event)"
-                spellcheck="false"></pre>
-            <pre class="code-display" 
-                (scroll)="syncScroll($event)">
-                <code [innerHTML]="highlightedCode" class="hljs language-html"></code>
-            </pre>
-        </div>
-        <div class="button-group">
-            <button (click)="saveNew()">Save as New Template</button>
-            <button (click)="duplicateTemplate()">Duplicate Template</button>
+    <ng-template #noCard>
+        <div class="no-selection">
+            Select a card to edit its properties
         </div>
     </ng-template>
 </div>

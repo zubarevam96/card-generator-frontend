@@ -1,0 +1,128 @@
+.template-properties {
+  padding: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+
+h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+}
+
+label {
+  display: block;
+  margin-top: 12px;
+  font-weight: bold;
+  font-size: 12px;
+  color: #333;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
+}
+
+.code-editor-wrapper {
+  position: relative;
+  display: block;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #fff;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  height: 250px;
+  margin-top: 8px;
+}
+
+.code-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  margin: 0;
+  border: none;
+  background-color: transparent;
+  color: transparent;
+  caret-color: #333;
+  overflow: auto;
+  z-index: 2;
+  box-sizing: border-box;
+  white-space: pre;
+  word-wrap: normal;
+  tab-size: 2;
+  -moz-tab-size: 2;
+  -webkit-tab-size: 2;
+  resize: none;
+  outline: none;
+}
+
+.code-display {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  margin: 0;
+  background-color: #fff;
+  color: #333;
+  overflow: auto;
+  z-index: 1;
+  box-sizing: border-box;
+  white-space: pre;
+  word-wrap: normal;
+  pointer-events: none;
+  outline: none;
+}
+
+.code-display code {
+  display: inline;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre;
+  background: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.button-group {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  flex: 1;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.no-selection {
+  text-align: center;
+  color: #999;
+  margin-top: 20px;
+  font-size: 14px;
+}

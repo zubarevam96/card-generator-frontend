@@ -1,9 +1,5 @@
 <div class="properties-block">
-    <ng-container *ngIf="showCanvasProps; else cardProps">
-        <app-canvas-properties></app-canvas-properties>
-    </ng-container>
-
-    <ng-template #cardProps>
-        <app-card-properties></app-card-properties>
-    </ng-template>
+    <app-canvas-properties *ngIf="!selectedCard && !selectedTemplate"></app-canvas-properties>
+    <app-card-properties *ngIf="selectedCard && !selectedTemplate"></app-card-properties>
+    <app-template-properties *ngIf="selectedTemplate"></app-template-properties>
 </div>
