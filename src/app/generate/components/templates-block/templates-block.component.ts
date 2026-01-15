@@ -101,4 +101,19 @@ export class TemplatesBlockComponent {
   saveCardAsTemplate(card: Card) {
     this.cardStorageService.addTemplate(card.name, card.templateHtml, this.selectedCanvasId);
   }
+
+  // Duplicate a template (without copying its cards)
+  duplicateTemplate(template: Template) {
+    const name = template.name && template.name.trim().length > 0 ? `${template.name} (copy)` : 'Template (copy)';
+    const newTemplate = this.cardStorageService.addTemplate(name, template.templateHtml, template.canvasId);
+    // Optionally open the duplicated template in editor
+    this.canvasService.editTemplate(newTemplate);
+  }
+
+  // Duplicate a card (copy current variables and linkage)
+  duplicateCard(card: Card) {
+    const name = card.name && card.name.trim().length > 0 ? `${card.name} (copy)` : 'Card (copy)';
+    // Use CanvasService to ensure proper canvasId is applied
+    this.canvasService.addCard(name, card.templateHtml, card.templateId, { ...card.variables });
+  }
 }

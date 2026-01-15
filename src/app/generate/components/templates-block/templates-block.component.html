@@ -1,20 +1,20 @@
 <div class="templates-block">
     <h3>Templates</h3>
-    <button (click)="newTemplate()">New</button>
+    <button class="small-btn" (click)="newTemplate()">New template</button>
     <div *ngFor="let template of getTemplatesForCanvas()" class="tree-node">
         <div class="tree-header">
             <button class="toggle-btn" (click)="toggleExpand(template.id)">
                 {{ isExpanded(template.id) ? '-' : '+' }}
             </button>
-            <strong>{{ template.name }}</strong>
-            <button class="small-btn" (click)="loadTemplate(template)">Load</button>
-            <button class="small-btn" (click)="editTemplate(template)">Edit</button>
+            <strong class="clickable" (click)="editTemplate(template)">{{ template.name || 'undefined' }}</strong>
+            <button class="small-btn" (click)="loadTemplate(template)">Add card</button>
+            <button class="small-btn" (click)="duplicateTemplate(template)">Duplicate</button>
             <button class="small-btn" (click)="deleteTemplate(template)">Delete</button>
         </div>
         <div *ngIf="isExpanded(template.id)" class="tree-children">
             <div *ngFor="let card of getLinkedCards(template.id)" class="tree-node child-node">
-                <strong>{{ card.name }}</strong>
-                <button class="small-btn" (click)="selectCard(card)">Select</button>
+                <strong class="clickable" (click)="selectCard(card)">{{ card.name || 'undefined' }}</strong>
+                <button class="small-btn" (click)="duplicateCard(card)">Duplicate</button>
                 <button class="small-btn" (click)="removeCard(card)">Remove</button>
             </div>
             <div *ngIf="getLinkedCards(template.id).length === 0" class="no-children">
@@ -22,12 +22,13 @@
             </div>
         </div>
     </div>
-
-    <h3>Unlinked Cards</h3>
-    <div *ngFor="let card of getUnlinkedCards()">
-        <strong>{{ card.name }}</strong>
-        <button class="small-btn" (click)="selectCard(card)">Select</button>
-        <button class="small-btn" (click)="removeCard(card)">Remove</button>
-        <button class="small-btn" (click)="saveCardAsTemplate(card)">Save as Template</button>
-    </div>
+    <ng-container *ngIf="getUnlinkedCards().length > 0">
+        <h3>Unlinked Cards</h3>
+        <div *ngFor="let card of getUnlinkedCards()">
+            <strong class="clickable" (click)="selectCard(card)">{{ card.name || 'undefined' }}</strong>
+            <button class="small-btn" (click)="duplicateCard(card)">Duplicate</button>
+            <button class="small-btn" (click)="removeCard(card)">Remove</button>
+            <button class="small-btn" (click)="saveCardAsTemplate(card)">Save as Template</button>
+        </div>
+    </ng-container>
 </div>
