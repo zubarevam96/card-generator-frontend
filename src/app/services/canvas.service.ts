@@ -198,8 +198,11 @@ export class CanvasService {
 
     const newTemplateHtml = template.templateHtml.replace(this.placeholderRegex, '{{$1}}');
 
-    // Update cards
-    const currentCards = this.cardsSubject.value.map(card => {
+    // Get ALL cards from storage, not just the filtered ones for current canvas
+    const allCards = this.cardStorageService.getAllCards();
+    
+    // Update ALL cards that belong to this template (across all canvases)
+    allCards.forEach(card => {
       if (card.templateId === template.id) {
         const updatedVariables = { ...card.variables };
 
@@ -230,16 +233,18 @@ export class CanvasService {
           newTemplateHtml,
           card.templateId,
           card.id,
-          updatedVariables
+          updatedVariables,
+          card.canvasId
         );
         // Persist the updated card
         this.cardStorageService.updateCard(updatedCard);
-        return updatedCard;
       }
-      return card;
     });
 
-    this.cardsSubject.next(currentCards);
+    // Re-filter for current canvas to update cardsSubject
+    const currentCanvas = this.selectedCanvasSubject.value;
+    const filteredCards = this.cardStorageService.getAllCards().filter(c => c.canvasId === currentCanvas.id);
+    this.cardsSubject.next(filteredCards);
   }
 
   // Canvas management methods
