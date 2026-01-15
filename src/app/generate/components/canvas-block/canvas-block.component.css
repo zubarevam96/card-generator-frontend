@@ -6,6 +6,9 @@
     color: #111;
     line-height: 1.25;
     box-sizing: border-box; /* make sizing sane for host */
+    width: 100%; /* constrain host to parent width */
+    max-width: 100%; /* prevent overflow */
+    overflow: hidden; /* hide overflow from canvas-inner */
 }
 
 /* helper: ensure all elements use border-box inside shadow root */
@@ -17,15 +20,66 @@
 .canvas-block {
     display: flex;
     flex-direction: column;
+    height: 100%; /* fill parent grid cell height */
+    width: 100%; /* fill parent grid cell width */
+    max-width: 100%; /* prevent expansion */
+    overflow: hidden; /* hide overflow from canvas-inner */
 }
 
-/* container spacing between cards (unchanged) */
+.canvas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+}
+
+.canvas-title {
+    margin: 8px 0;
+    cursor: pointer;
+}
+
+.export-btn {
+    padding: 8px 16px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.export-btn:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+.export-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* container spacing between cards (viewport) */
 .canvas-container {
+    /* viewport that fills remaining space in canvas-block */
+    display: block;
+    padding: 16px;
+    overflow: auto; /* enable scrollbars when canvas-inner is larger */
+    flex: 1; /* take remaining space after header */
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background-color: #fafafa;
+    /* canvas-inner will scroll inside this viewport */
+}
+
+/* inner canvas with exact canvas dimensions; layout controls (wrap/gap) apply here */
+.canvas-inner {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
-    gap: 16px;
-    padding: 16px;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 /* outer card frame: width/height come from [style.width.px]/[style.height.px] */
@@ -34,6 +88,7 @@
     display: flex;
     align-items: stretch;          /* make inner fill height */
     justify-content: center;
+    flex: 0 0 auto;
     border-radius: 10px;
     background-color: #fff;
     overflow: hidden;

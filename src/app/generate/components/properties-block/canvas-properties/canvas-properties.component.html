@@ -1,29 +1,50 @@
 <div class="canvas-properties">
-    <h4>Canvas Properties</h4>
+    <h4>Canvas Properties (PDF Dimensions)</h4>
 
-    <label>
-        Card Width:
-        <input type="number" [(ngModel)]="canvas.cardWidth" (input)="updateCanvas()" />
-    </label>
-    <br>
-    <label>
-        Card Height:
-        <input type="number" [(ngModel)]="canvas.cardHeight" (input)="updateCanvas()" />
-    </label>
-    <br>
-    <label>
-        Canvas Width:
-        <input type="number" [(ngModel)]="canvas.canvasWidth" (input)="updateCanvas()" />
-    </label>
-    <br>
-    <label>
-        Canvas Height:
-        <input type="number" [(ngModel)]="canvas.canvasHeight" (input)="updateCanvas()" />
-    </label>
-    <br>
-    <label>
-        Distance between cards:
-        <input type="number" [(ngModel)]="canvas.distanceBetweenCards" (input)="updateCanvas()" />
-    </label>
+    <div class="property-group">
+        <label>
+            Canvas Width (pixels):
+            <input type="number" [(ngModel)]="canvas.canvasWidth" (input)="updateCanvas()" placeholder="PDF width in pixels" />
+            <span class="hint">{{ (canvas.canvasWidth * 0.264583).toFixed(1) }}mm</span>
+        </label>
+    </div>
 
+    <div class="property-group">
+        <label>
+            Canvas Height (pixels):
+            <input type="number" [(ngModel)]="canvas.canvasHeight" (input)="updateCanvas()" placeholder="PDF height in pixels" />
+            <span class="hint">{{ (canvas.canvasHeight * 0.264583).toFixed(1) }}mm</span>
+        </label>
+    </div>
+
+    <div class="presets">
+        <button (click)="setA4Portrait()">A4 Portrait (595x842)</button>
+        <button (click)="setA4Landscape()">A4 Landscape (842x595)</button>
+        <button (click)="setLetter()">Letter (612x792)</button>
+    </div>
+
+    <hr>
+
+    <h4>Card Properties</h4>
+
+    <div class="property-group">
+        <label>
+            Card Width:
+            <input type="number" [(ngModel)]="canvas.cardWidth" (input)="updateCanvas()" />
+        </label>
+    </div>
+
+    <div class="property-group">
+        <label>
+            Card Height:
+            <input type="number" [(ngModel)]="canvas.cardHeight" (input)="updateCanvas()" />
+        </label>
+    </div>
+
+    <div class="property-group">
+        <label>
+            Distance between cards:
+            <input type="number" [(ngModel)]="canvas.distanceBetweenCards" (input)="updateCanvas()" />
+        </label>
+    </div>
 </div>

@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { CanvasService } from '../../../services/canvas.service';
+import { PdfExportService } from '../../../services/pdf-export.service';
 import { Card } from '../../../models/card.model';
 import { Template } from '../../../models/template.model';
 import { ViewEncapsulation } from '@angular/core';
@@ -24,7 +25,7 @@ export class CanvasBlockComponent {
 
   private placeholderRegex = /{{\s*([\w-]+)\s*=\s*(?:"([^"]*)"|\d+)\s*}}/g;
 
-  constructor(private canvasService: CanvasService, private sanitizer: DomSanitizer) {
+  constructor(private canvasService: CanvasService, private sanitizer: DomSanitizer, private pdfExportService: PdfExportService) {
     this.canvasService.cards$.subscribe(cards => (this.cards = cards));
     this.canvasService.selectedCard$.subscribe(c => (this.selectedCardId = c?.id ?? null));
     this.canvasService.canvas$.subscribe(c => (this.canvas = c));
@@ -79,5 +80,13 @@ export class CanvasBlockComponent {
     if ((event.target as HTMLElement).classList.contains('modal-overlay')) {
       this.canvasService.closeTemplateEdit();
     }
+  }
+
+  exportToPdf() {
+    if (this.cards.length === 0) {
+      alert('No cards to export');
+      return;
+    }
+    this.pdfExportService.exportCardsToPdf(this.cards, this.canvas, 'cards');
   }
 }

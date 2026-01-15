@@ -1,17 +1,21 @@
 <div class="canvas-block">
-    <h3 class="canvas-title" (click)="selectCanvas()">Canvas</h3>
+    <div class="canvas-header">
+        <h3 class="canvas-title" (click)="selectCanvas()">Canvas</h3>
+        <button class="export-btn" (click)="exportToPdf()" [disabled]="cards.length === 0">Export to PDF</button>
+    </div>
 
-    <div class="canvas-container" [style.max-width.px]="canvas.canvasWidth" [style.max-height.px]="canvas.canvasHeight">
-        <div
-                *ngFor="let card of cards"
-                class="canvas-card"
-                [class.selected]="isSelected(card)"
-                [style.width.px]="canvas.cardWidth"
-                [style.height.px]="canvas.cardHeight"
-                [style.margin.px]="canvas.distanceBetweenCards"
-                (click)="selectCard(card)"
-        >
-            <div class="card-inner" [innerHTML]="getSafeHtml(card)"></div>
+    <div class="canvas-container">
+        <div class="canvas-inner" [style.width.px]="canvas.canvasWidth" [style.height.px]="canvas.canvasHeight" [style.gap.px]="canvas.distanceBetweenCards">
+            <div
+                    *ngFor="let card of cards"
+                    class="canvas-card"
+                    [class.selected]="isSelected(card)"
+                    [style.width.px]="canvas.cardWidth"
+                    [style.height.px]="canvas.cardHeight"
+                    (click)="selectCard(card)"
+            >
+                <div class="card-inner" [innerHTML]="getSafeHtml(card)"></div>
+            </div>
         </div>
     </div>
 

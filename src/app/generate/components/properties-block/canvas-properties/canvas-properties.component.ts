@@ -20,4 +20,22 @@ export class CanvasPropertiesComponent {
   updateCanvas() {
     this.canvasService.updateCanvas(this.canvas);
   }
+
+  setA4Portrait() {
+    this.canvas.canvasWidth = 595;
+    this.canvas.canvasHeight = 842;
+    this.updateCanvas();
+  }
+
+  setA4Landscape() {
+    this.canvas.canvasWidth = 842;
+    this.canvas.canvasHeight = 595;
+    this.updateCanvas();
+  }
+
+  setLetter() {
+    this.canvas.canvasWidth = 612;
+    this.canvas.canvasHeight = 792;
+    this.updateCanvas();
+  }
 }
