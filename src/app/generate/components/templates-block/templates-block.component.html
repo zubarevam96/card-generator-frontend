@@ -1,6 +1,11 @@
 <div class="templates-block">
     <h3>Templates</h3>
-    <button class="small-btn" (click)="newTemplate()">New template</button>
+    <div class="actions-row">
+        <button class="small-btn" (click)="newTemplate()">New template</button>
+        <button class="small-btn" (click)="templateImportInput.click()">Import template</button>
+        <input #templateImportInput type="file" accept="application/json,.json" (change)="onTemplateImportChange($event)" hidden>
+        <button class="small-btn" (click)="importTemplateFromText()">Paste JSON</button>
+    </div>
     <div *ngFor="let template of getTemplatesForCanvas()" class="tree-node">
         <div class="tree-header">
             <button class="toggle-btn" (click)="toggleExpand(template.id)">
@@ -8,6 +13,7 @@
             </button>
             <strong class="clickable" (click)="editTemplate(template)">{{ template.name || 'undefined' }}</strong>
             <button class="small-btn" (click)="loadTemplate(template)">Add card</button>
+            <button class="small-btn" (click)="exportTemplate(template)">Export</button>
             <button class="small-btn" (click)="duplicateTemplate(template)">Duplicate</button>
             <button class="small-btn" (click)="deleteTemplate(template)">Delete</button>
         </div>
@@ -31,4 +37,10 @@
             <button class="small-btn" (click)="saveCardAsTemplate(card)">Save as Template</button>
         </div>
     </ng-container>
+    <app-json-modal
+        [visible]="showJsonModal"
+        [title]="jsonModalTitle"
+        [content]="jsonModalContent"
+        (close)="closeJsonModal()"
+    ></app-json-modal>
 </div>

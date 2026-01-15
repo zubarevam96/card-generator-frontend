@@ -7,11 +7,13 @@ import { Card } from '../../../models/card.model';
 import { Template } from '../../../models/template.model';
 import { ViewEncapsulation } from '@angular/core';
 import { Canvas } from '../../../models/canvas.model';
+import { CardStorageService } from '../../../services/card-storage.service';
+import { JsonModalComponent } from '../../../shared/json-modal/json-modal.component';
 
 @Component({
   selector: 'app-canvas-block',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, JsonModalComponent],
   templateUrl: './canvas-block.component.html',
   styleUrls: ['./canvas-block.component.css'],
   encapsulation: ViewEncapsulation.ShadowDom
@@ -24,10 +26,19 @@ export class CanvasBlockComponent {
   selectedTemplate: Template | null = null;
   isEditingTemplate = false;
   cardPages: Card[][] = []; // Array of card arrays, one array per page
+  templates: Template[] = [];
+  showJsonModal = false;
+  jsonModalTitle = '';
+  jsonModalContent = '';
 
   private placeholderRegex = /{{\s*([\w-]+)\s*=\s*(?:"([^"]*)"|\d+)\s*}}/g;
 
-  constructor(private canvasService: CanvasService, private sanitizer: DomSanitizer, private pdfExportService: PdfExportService) {
+  constructor(
+    private canvasService: CanvasService,
+    private sanitizer: DomSanitizer,
+    private pdfExportService: PdfExportService,
+    private cardStorageService: CardStorageService
+  ) {
     this.canvasService.canvases$.subscribe(canvases => {
       this.canvases = canvases;
     });
@@ -47,6 +58,10 @@ export class CanvasBlockComponent {
     this.canvasService.selectedTemplate$.subscribe(template => {
       this.selectedTemplate = template;
       this.isEditingTemplate = !!template;
+    });
+
+    this.cardStorageService.templates$.subscribe(templates => {
+      this.templates = templates;
     });
   }
 
@@ -164,5 +179,100 @@ export class CanvasBlockComponent {
       return;
     }
     this.pdfExportService.exportCardsToPdf(this.cards, this.canvas, 'cards');
+  }
+
+  exportCanvasJson() {
+    if (!this.canvas) return;
+    const templatesForCanvas = this.templates.filter(t => t.canvasId === this.canvas.id);
+    const cardsForCanvas = this.cards.filter(c => c.canvasId === this.canvas.id);
+
+    const payload = {
+      type: 'canvas',
+      version: 1,
+      canvas: this.toPlainCanvas(this.canvas),
+      templates: templatesForCanvas.map(t => this.toPlainTemplate(t)),
+      cards: cardsForCanvas.map(c => this.toPlainCard(c))
+    };
+
+    this.openJsonModal(`Export canvas: ${this.canvas.name}`, JSON.stringify(payload, null, 2));
+  }
+
+  onCanvasImportChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result as string);
+        const imported = this.canvasService.importCanvas(parsed);
+        if (!imported) {
+          alert('Invalid canvas JSON');
+        }
+      } catch (err) {
+        alert('Invalid canvas JSON');
+      }
+      input.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  importCanvasFromText() {
+    const raw = prompt('Paste canvas JSON');
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      const imported = this.canvasService.importCanvas(parsed);
+      if (!imported) {
+        alert('Invalid canvas JSON');
+      }
+    } catch (err) {
+      alert('Invalid canvas JSON');
+    }
+  }
+
+  closeJsonModal() {
+    this.showJsonModal = false;
+    this.jsonModalContent = '';
+  }
+
+  private openJsonModal(title: string, content: string) {
+    this.jsonModalTitle = title;
+    this.jsonModalContent = content;
+    this.showJsonModal = true;
+  }
+
+  private toPlainCanvas(canvas: Canvas) {
+    return {
+      id: canvas.id,
+      name: canvas.name,
+      cardWidth: canvas.cardWidth,
+      cardHeight: canvas.cardHeight,
+      canvasWidth: canvas.canvasWidth,
+      canvasHeight: canvas.canvasHeight,
+      distanceBetweenCards: canvas.distanceBetweenCards
+    };
+  }
+
+  private toPlainTemplate(template: Template) {
+    return {
+      id: template.id,
+      name: template.name,
+      templateHtml: template.templateHtml,
+      variables: template.variables,
+      canvasId: template.canvasId
+    };
+  }
+
+  private toPlainCard(card: Card) {
+    return {
+      id: card.id,
+      name: card.name,
+      templateHtml: card.templateHtml,
+      variables: card.variables,
+      templateId: card.templateId,
+      canvasId: card.canvasId
+    };
   }
 }

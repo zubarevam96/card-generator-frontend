@@ -49,9 +49,11 @@ export class CanvasService {
       this.loadCardsForCanvas(canvas);
     });
     
-    // Subscribe to updates from storage
+    // Subscribe to updates from storage and keep current canvas filtered
     this.cardStorageService.cards$.subscribe(cards => {
-      this.cardsSubject.next(cards);
+      const currentCanvas = this.selectedCanvasSubject.value;
+      const filtered = cards.filter(c => c.canvasId === currentCanvas.id);
+      this.cardsSubject.next(filtered);
     });
   }
 
@@ -249,12 +251,70 @@ export class CanvasService {
     this.selectedCanvasSubject.next(canvas);
   }
 
-  addCanvas(name: string = 'New Canvas'): Canvas {
-    const newCanvas = new Canvas(name);
+  addCanvas(name: string = 'New Canvas', config?: Partial<Canvas>): Canvas {
+    const newCanvas = new Canvas(
+      name,
+      config?.cardWidth ?? undefined,
+      config?.cardHeight ?? undefined,
+      config?.canvasWidth ?? undefined,
+      config?.canvasHeight ?? undefined,
+      config?.distanceBetweenCards ?? undefined
+    );
     const canvases = [...this.canvasesSubject.value, newCanvas];
     this.canvasesSubject.next(canvases);
     this.cardStorageService.saveCanvases(canvases);
     return newCanvas;
+  }
+
+  importCanvas(payload: any): Canvas | null {
+    if (!payload) return null;
+
+    const canvasData = payload.canvas ?? payload;
+    const importedCanvas = new Canvas(
+      canvasData.name ?? 'Imported Canvas',
+      canvasData.cardWidth ?? undefined,
+      canvasData.cardHeight ?? undefined,
+      canvasData.canvasWidth ?? undefined,
+      canvasData.canvasHeight ?? undefined,
+      canvasData.distanceBetweenCards ?? undefined
+    );
+
+    const canvases = [...this.canvasesSubject.value, importedCanvas];
+    this.canvasesSubject.next(canvases);
+    this.cardStorageService.saveCanvases(canvases);
+
+    const templateIdMap: Record<number, number> = {};
+    const templates = Array.isArray(payload.templates) ? payload.templates : [];
+
+    templates.forEach((t: any, index: number) => {
+      const templateName = t?.name && t.name.trim().length > 0 ? t.name : `Imported Template ${index + 1}`;
+      const templateHtml = t?.templateHtml ?? '';
+      const templateVars = t?.variables ?? {};
+      const newTemplate = this.cardStorageService.addTemplate(templateName, templateHtml, importedCanvas.id);
+      newTemplate.variables = { ...templateVars };
+      this.cardStorageService.updateTemplate(newTemplate);
+      const originalId = typeof t?.id === 'number' ? t.id : index;
+      templateIdMap[originalId] = newTemplate.id;
+    });
+
+    const cards = Array.isArray(payload.cards) ? payload.cards : [];
+    cards.forEach((c: any, index: number) => {
+      const templateKey = typeof c?.templateId === 'number' ? c.templateId : (typeof c?.templateIndex === 'number' ? c.templateIndex : -1);
+      const mappedTemplateId = templateIdMap[templateKey] ?? templateIdMap[index];
+      if (!mappedTemplateId) {
+        return;
+      }
+      const cardName = c?.name && c.name.trim().length > 0 ? c.name : `Imported Card ${index + 1}`;
+      const cardHtml = c?.templateHtml ?? '';
+      const cardVars = c?.variables ?? {};
+      this.cardStorageService.addCard(cardName, cardHtml, mappedTemplateId, { ...cardVars }, importedCanvas.id);
+    });
+
+    this.selectedCanvasSubject.next(importedCanvas);
+    this.canvasSubject.next(importedCanvas);
+    this.loadCardsForCanvas(importedCanvas);
+
+    return importedCanvas;
   }
 
   deleteCanvas(canvasId: number) {

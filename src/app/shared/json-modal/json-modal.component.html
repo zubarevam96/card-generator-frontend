@@ -1,0 +1,16 @@
+<div class="json-modal-backdrop" *ngIf="visible" (click)="onClose()">
+  <div class="json-modal" (click)="$event.stopPropagation()">
+    <div class="json-modal__header">
+      <h4>{{ title }}</h4>
+      <button class="close-btn" (click)="onClose()">Close</button>
+    </div>
+    <div class="json-modal__body">
+      <div #editorHost class="code-host"></div>
+      <pre class="fallback" *ngIf="!editorReady">{{ content }}</pre>
+    </div>
+    <div class="json-modal__actions">
+      <button (click)="copyContent()">Copy JSON</button>
+      <button (click)="onClose()">Done</button>
+    </div>
+  </div>
+</div>

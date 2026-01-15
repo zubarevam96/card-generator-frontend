@@ -34,6 +34,13 @@
     gap: 12px;
 }
 
+.canvas-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .canvas-title {
     margin: 8px 0;
     cursor: pointer;
@@ -141,6 +148,19 @@
     background-color: #ccc;
     cursor: not-allowed;
     opacity: 0.6;
+}
+
+.secondary-btn {
+    padding: 8px 12px;
+    background-color: #f0f0f0;
+    color: #222;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.secondary-btn:hover {
+    background-color: #e0e0e0;
 }
 
 /* container spacing between cards (viewport) */

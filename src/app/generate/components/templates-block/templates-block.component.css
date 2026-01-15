@@ -40,3 +40,10 @@
 .clickable {
     cursor: pointer;
 }
+
+.actions-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}

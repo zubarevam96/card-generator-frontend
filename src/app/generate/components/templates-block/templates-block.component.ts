@@ -4,11 +4,12 @@ import { CanvasService } from '../../../services/canvas.service';
 import { CardStorageService } from '../../../services/card-storage.service';
 import { Card } from '../../../models/card.model';
 import { Template } from '../../../models/template.model';
+import { JsonModalComponent } from '../../../shared/json-modal/json-modal.component';
 
 @Component({
   selector: 'app-templates-block',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, JsonModalComponent],
   templateUrl: './templates-block.component.html',
   styleUrls: ['./templates-block.component.css']  // Add if new
 })
@@ -17,6 +18,9 @@ export class TemplatesBlockComponent {
   cards: Card[] = [];
   expandedTemplates: Set<number> = new Set();  // For expand/collapse
   selectedCanvasId: number = 1;
+  showJsonModal = false;
+  jsonModalTitle = '';
+  jsonModalContent = '';
 
   constructor(private canvasService: CanvasService, private cardStorageService: CardStorageService) {
     this.cardStorageService.templates$.subscribe((templates: Template[]) => (this.templates = templates));
@@ -115,5 +119,100 @@ export class TemplatesBlockComponent {
     const name = card.name && card.name.trim().length > 0 ? `${card.name} (copy)` : 'Card (copy)';
     // Use CanvasService to ensure proper canvasId is applied
     this.canvasService.addCard(name, card.templateHtml, card.templateId, { ...card.variables });
+  }
+
+  exportTemplate(template: Template) {
+    const linkedCards = this.getLinkedCards(template.id);
+    const payload = {
+      type: 'template',
+      version: 1,
+      template: this.toPlainTemplate(template),
+      cards: linkedCards.map(card => this.toPlainCard(card))
+    };
+    this.openJsonModal(`Export template: ${template.name || 'undefined'}`, JSON.stringify(payload, null, 2));
+  }
+
+  onTemplateImportChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result as string);
+        this.importTemplatePayload(parsed);
+      } catch (err) {
+        alert('Invalid template JSON');
+      }
+      input.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  importTemplateFromText() {
+    const raw = prompt('Paste template JSON');
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      this.importTemplatePayload(parsed);
+    } catch (err) {
+      alert('Invalid template JSON');
+    }
+  }
+
+  closeJsonModal() {
+    this.showJsonModal = false;
+    this.jsonModalContent = '';
+  }
+
+  private importTemplatePayload(payload: any) {
+    if (!payload) return;
+
+    const templateData = payload.template ?? payload;
+    const targetCanvasId = this.selectedCanvasId;
+    const templateName = templateData.name && templateData.name.trim().length > 0 ? templateData.name : 'Imported Template';
+    const templateHtml = templateData.templateHtml ?? '';
+    const templateVariables = templateData.variables ?? {};
+
+    const newTemplate = this.cardStorageService.addTemplate(templateName, templateHtml, targetCanvasId);
+    // Persist any default variables carried on template
+    newTemplate.variables = { ...templateVariables };
+    this.cardStorageService.updateTemplate(newTemplate);
+
+    const cards = Array.isArray(payload.cards) ? payload.cards : [];
+    cards.forEach((card: any, index: number) => {
+      const cardName = card?.name && card.name.trim().length > 0 ? card.name : `Imported Card ${index + 1}`;
+      const cardHtml = card?.templateHtml ?? templateHtml;
+      const cardVars = card?.variables ?? {};
+      this.cardStorageService.addCard(cardName, cardHtml, newTemplate.id, { ...cardVars }, targetCanvasId);
+    });
+  }
+
+  private openJsonModal(title: string, content: string) {
+    this.jsonModalTitle = title;
+    this.jsonModalContent = content;
+    this.showJsonModal = true;
+  }
+
+  private toPlainTemplate(template: Template) {
+    return {
+      id: template.id,
+      name: template.name,
+      templateHtml: template.templateHtml,
+      variables: template.variables,
+      canvasId: template.canvasId
+    };
+  }
+
+  private toPlainCard(card: Card) {
+    return {
+      id: card.id,
+      name: card.name,
+      templateHtml: card.templateHtml,
+      variables: card.variables,
+      templateId: card.templateId,
+      canvasId: card.canvasId
+    };
   }
 }

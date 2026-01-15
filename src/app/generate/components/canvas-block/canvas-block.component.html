@@ -1,7 +1,13 @@
 <div class="canvas-block">
     <div class="canvas-header">
         <h3 class="canvas-title" (click)="selectCanvas()">Canvas</h3>
-        <button class="export-btn" (click)="exportToPdf()" [disabled]="cards.length === 0">Export to PDF</button>
+        <div class="canvas-actions">
+            <button class="secondary-btn" (click)="canvasImportInput.click()">Import JSON</button>
+            <input #canvasImportInput type="file" accept="application/json,.json" hidden (change)="onCanvasImportChange($event)">
+            <button class="secondary-btn" (click)="importCanvasFromText()">Paste JSON</button>
+            <button class="export-btn" (click)="exportCanvasJson()">Export JSON</button>
+            <button class="export-btn" (click)="exportToPdf()" [disabled]="cards.length === 0">Export to PDF</button>
+        </div>
     </div>
 
     <!-- Canvas tabs -->
@@ -66,4 +72,11 @@
                 [innerHTML]="getPreviewSafeHtml()"
         ></div>
     </div>
+
+    <app-json-modal
+            [visible]="showJsonModal"
+            [title]="jsonModalTitle"
+            [content]="jsonModalContent"
+            (close)="closeJsonModal()"
+    ></app-json-modal>
 </div>
