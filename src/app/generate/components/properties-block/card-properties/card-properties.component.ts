@@ -17,7 +17,7 @@ export class CardPropertiesComponent {
   localVariables: { [key: string]: string } = {};
   localFontSizes: { [key: string]: number | null } = {};
   variableKeys: string[] = [];
-  private placeholderRegex = /{{(\w+)}}/g;
+  private placeholderRegex = /{{([\w-]+)}}/g;
 
   constructor(private canvasService: CanvasService, private cardStorageService: CardStorageService) {
     this.canvasService.selectedCard$.subscribe((card: Card | null) => {

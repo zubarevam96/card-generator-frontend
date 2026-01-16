@@ -92,7 +92,7 @@ export class PdfExportService {
           
                 // Render the container (which includes padding for margins)
                 html2canvas(container, {
-            scale: 2,
+            scale: Math.max(2, Math.floor((window as any).devicePixelRatio || 2)),
             useCORS: true,
             logging: false,
             backgroundColor: '#ffffff',

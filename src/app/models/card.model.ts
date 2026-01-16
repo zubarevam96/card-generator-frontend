@@ -38,8 +38,11 @@ export class Card {
       const fontSize = this.variableFontSizes?.[key];
       const replacement = fontSize !== undefined && fontSize !== null
         ? (() => {
-            const lineHeight = Math.round(fontSize * 1.2) || fontSize || 12; // tighten lines relative to smaller text
-            return `<span style="font-size: ${fontSize}px; line-height: ${lineHeight}px; display: inline-block;">${value}</span>`;
+            const lineHeight = Math.round(fontSize * 1.2) || fontSize || 12;
+            const isBlockContent = /<\s*(div|p|ul|ol|li|table|tr|td|th|section|article|header|footer|h1|h2|h3|h4|h5|h6)[^>]*>/i.test(value);
+            const tag = isBlockContent ? 'div' : 'span';
+            const display = isBlockContent ? 'block' : 'inline-block';
+            return `<${tag} style="font-size: ${fontSize}px; line-height: ${lineHeight}px; display: ${display};">${value}</${tag}>`;
           })()
         : value;
       html = html.replace(new RegExp(`{{${key}}}`, 'g'), replacement);
