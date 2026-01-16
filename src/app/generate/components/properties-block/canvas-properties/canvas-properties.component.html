@@ -19,8 +19,8 @@
 
     <div class="presets">
         <h5>Paper Sizes</h5>
-        <button (click)="setA4Portrait()">A4 Portrait (595x842)</button>
-        <button (click)="setA4Landscape()">A4 Landscape (842x595)</button>
+        <button (click)="setA4Portrait()">A4 Portrait ({{a4PortraitWidth}}x{{a4PortraitHeight}})</button>
+        <button (click)="setA4Landscape()">A4 Landscape ({{a4LandscapeWidth}}x{{a4LandscapeHeight}})</button>
     </div>
 
     <hr>
@@ -58,9 +58,9 @@
     <div class="presets card-presets">
         <h5>Card Size Presets (Eurogame)</h5>
         <div class="preset-row">
-            <button (click)="setEurogameSmall()">Small (41×63mm)</button>
-            <button (click)="setEurogameMedium()">Medium (45×68mm)</button>
-            <button (click)="setEurogameLarge()">Large (59×92mm)</button>
+            <button (click)="setEurogameSmall()">Small (41×63mm — {{smallCardWidth}}x{{smallCardHeight}}px)</button>
+            <button (click)="setEurogameMedium()">Medium (45×68mm — {{mediumCardWidth}}x{{mediumCardHeight}}px)</button>
+            <button (click)="setEurogameLarge()">Large (59×92mm — {{largeCardWidth}}x{{largeCardHeight}}px)</button>
         </div>
     </div>
 </div>

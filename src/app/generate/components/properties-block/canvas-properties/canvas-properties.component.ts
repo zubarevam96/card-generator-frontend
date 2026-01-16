@@ -4,6 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { CanvasService } from '../../../../services/canvas.service';
 import { Canvas } from '../../../../models/canvas.model';
 
+// Conversion constants
+const MM_TO_PX = 96 / 25.4; // 96 DPI -> px per mm = 96 / 25.4 = 3.779527559055118
+const A4_WIDTH_MM = 210;
+const A4_HEIGHT_MM = 297;
+
 @Component({
   selector: 'app-canvas-properties',
   standalone: true,
@@ -12,6 +17,22 @@ import { Canvas } from '../../../../models/canvas.model';
 })
 export class CanvasPropertiesComponent {
   canvas: Canvas = new Canvas();
+  // Computed A4 sizes in pixels (rounded)
+  a4PortraitWidth = Math.round(A4_WIDTH_MM * MM_TO_PX);
+  a4PortraitHeight = Math.round(A4_HEIGHT_MM * MM_TO_PX);
+  a4LandscapeWidth = Math.round(A4_HEIGHT_MM * MM_TO_PX);
+  a4LandscapeHeight = Math.round(A4_WIDTH_MM * MM_TO_PX);
+  // Eurogame card presets in mm
+  smallCardMm = { w: 41, h: 63 };
+  mediumCardMm = { w: 45, h: 68 };
+  largeCardMm = { w: 59, h: 92 };
+  // Computed pixel sizes for presets
+  smallCardWidth = Math.round(this.smallCardMm.w * MM_TO_PX);
+  smallCardHeight = Math.round(this.smallCardMm.h * MM_TO_PX);
+  mediumCardWidth = Math.round(this.mediumCardMm.w * MM_TO_PX);
+  mediumCardHeight = Math.round(this.mediumCardMm.h * MM_TO_PX);
+  largeCardWidth = Math.round(this.largeCardMm.w * MM_TO_PX);
+  largeCardHeight = Math.round(this.largeCardMm.h * MM_TO_PX);
 
   constructor(private canvasService: CanvasService) {
     this.canvasService.canvas$.subscribe(c => (this.canvas = { ...c }));
@@ -22,37 +43,36 @@ export class CanvasPropertiesComponent {
   }
 
   setA4Portrait() {
-    // 210mm x 297mm at 96 DPI: 755 x 1123 px
-    this.canvas.canvasWidth = 755;
-    this.canvas.canvasHeight = 1123;
+    // Use precise mm->px conversion
+    this.canvas.canvasWidth = this.a4PortraitWidth;
+    this.canvas.canvasHeight = this.a4PortraitHeight;
     this.updateCanvas();
   }
 
   setA4Landscape() {
-    // 297mm x 210mm at 96 DPI: 1123 x 755 px
-    this.canvas.canvasWidth = 1123;
-    this.canvas.canvasHeight = 755;
+    this.canvas.canvasWidth = this.a4LandscapeWidth;
+    this.canvas.canvasHeight = this.a4LandscapeHeight;
     this.updateCanvas();
   }
 
   setEurogameSmall() {
-    // 41mm × 63mm
-    this.canvas.cardWidth = 155;
-    this.canvas.cardHeight = 238;
+    // 41mm × 63mm -> px
+    this.canvas.cardWidth = this.smallCardWidth;
+    this.canvas.cardHeight = this.smallCardHeight;
     this.updateCanvas();
   }
 
   setEurogameMedium() {
-    // 45mm × 68mm
-    this.canvas.cardWidth = 170;
-    this.canvas.cardHeight = 257;
+    // 45mm × 68mm -> px
+    this.canvas.cardWidth = this.mediumCardWidth;
+    this.canvas.cardHeight = this.mediumCardHeight;
     this.updateCanvas();
   }
 
   setEurogameLarge() {
-    // 59mm × 92mm
-    this.canvas.cardWidth = 223;
-    this.canvas.cardHeight = 348;
+    // 59mm × 92mm -> px
+    this.canvas.cardWidth = this.largeCardWidth;
+    this.canvas.cardHeight = this.largeCardHeight;
     this.updateCanvas();
   }
 }
