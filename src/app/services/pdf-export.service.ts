@@ -144,20 +144,108 @@ export class PdfExportService {
     document.body.appendChild(container);
 
     // Add cards to container
-    pageCards.forEach((card) => {
+    pageCards.forEach((card, index) => {
       const cardDiv = document.createElement('div');
       cardDiv.style.width = canvas.cardWidth + 'px';
       cardDiv.style.height = canvas.cardHeight + 'px';
       cardDiv.style.boxSizing = 'border-box';
       cardDiv.style.overflow = 'hidden';
       cardDiv.style.border = '1px solid #ddd';
-      cardDiv.style.borderRadius = '10px';
+      cardDiv.style.borderRadius = '0';
       cardDiv.style.backgroundColor = '#fff';
+      cardDiv.style.position = 'relative';
+      cardDiv.style.zIndex = '10';
       cardDiv.innerHTML = card.renderedHtml;
       container.appendChild(cardDiv);
+
+      this.addCropMarks(container, index, canvas, cardsPerRow);
     });
 
     return container;
+  }
+
+  /**
+   * Add small crop marks at the four card corners to help with cutting
+   */
+  private addCropMarks(container: HTMLElement, cardIndex: number, canvas: Canvas, cardsPerRow: number): void {
+    const padding = canvas.distanceFromBorders ?? 0;
+    const gap = canvas.distanceBetweenCards;
+    const cardWidth = canvas.cardWidth;
+    const cardHeight = canvas.cardHeight;
+
+    const col = cardIndex % cardsPerRow;
+    const row = Math.floor(cardIndex / cardsPerRow);
+
+    const left = padding + col * (cardWidth + gap);
+    const top = padding + row * (cardHeight + gap);
+    const right = left + cardWidth;
+    const bottom = top + cardHeight;
+
+    const thickness = 1;
+    this.ensureGuideLines(container, left, right, top, bottom, thickness, canvas);
+  }
+
+  private ensureGuideLines(
+    container: HTMLElement,
+    left: number,
+    right: number,
+    top: number,
+    bottom: number,
+    thickness: number,
+    canvas: Canvas
+  ): void {
+    const keyStore = (container as any).__guideSet as Set<string> | undefined;
+    const guideSet = keyStore ?? new Set<string>();
+    if (!keyStore) {
+      (container as any).__guideSet = guideSet;
+    }
+
+    const color = 'rgba(0, 0, 0, 0.45)';
+
+    const addVertical = (x: number) => {
+      const key = `v-${x}`;
+      if (guideSet.has(key)) return;
+      guideSet.add(key);
+      this.drawVerticalGuide(container, x, canvas.canvasHeight, thickness, color);
+    };
+
+    const addHorizontal = (y: number) => {
+      const key = `h-${y}`;
+      if (guideSet.has(key)) return;
+      guideSet.add(key);
+      this.drawHorizontalGuide(container, y, canvas.canvasWidth, thickness, color);
+    };
+
+    addVertical(left + 1);   // left edge, shift right into card
+    addVertical(right - 1);  // right edge, shift left into card
+    addHorizontal(top + 1);  // top edge, shift down into card
+    addHorizontal(bottom - 1); // bottom edge, shift up into card
+  }
+
+  private drawVerticalGuide(container: HTMLElement, x: number, height: number, thickness: number, color: string): void {
+    const line = document.createElement('div');
+    line.style.position = 'absolute';
+    line.style.left = `${x}px`;
+    line.style.top = '0';
+    line.style.width = '0';
+    line.style.height = `${height}px`;
+    line.style.borderLeft = `${thickness}px dashed ${color}`;
+    line.style.pointerEvents = 'none';
+    line.style.zIndex = '4';
+    container.appendChild(line);
+  }
+
+  private drawHorizontalGuide(container: HTMLElement, y: number, width: number, thickness: number, color: string): void {
+    const line = document.createElement('div');
+    line.style.position = 'absolute';
+    line.style.left = '0';
+    line.style.top = `${y}px`;
+    line.style.width = `${width}px`;
+    line.style.height = '0';
+    line.style.borderTop = `${thickness}px dashed ${color}`;
+    line.style.pointerEvents = 'none';
+    line.style.zIndex = '4';
+    container.appendChild(line);
   }
 
   /**
