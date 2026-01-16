@@ -22,14 +22,16 @@ export class CanvasPropertiesComponent {
   }
 
   setA4Portrait() {
-    this.canvas.canvasWidth = 595;
-    this.canvas.canvasHeight = 842;
+    // 210mm x 297mm at 96 DPI: 755 x 1123 px
+    this.canvas.canvasWidth = 755;
+    this.canvas.canvasHeight = 1123;
     this.updateCanvas();
   }
 
   setA4Landscape() {
-    this.canvas.canvasWidth = 842;
-    this.canvas.canvasHeight = 595;
+    // 297mm x 210mm at 96 DPI: 1123 x 755 px
+    this.canvas.canvasWidth = 1123;
+    this.canvas.canvasHeight = 755;
     this.updateCanvas();
   }
 

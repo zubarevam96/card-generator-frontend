@@ -193,9 +193,7 @@
 
 /* inner canvas with exact canvas dimensions; layout controls (wrap/gap) apply here */
 .canvas-inner {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
+    /* Will be set to grid via inline styles to respect dynamic columns/rows */
     padding: 0;
     box-sizing: border-box;
     width: 100%; /* fill the page container width */
@@ -205,10 +203,6 @@
 /* outer card frame: width/height come from [style.width.px]/[style.height.px] */
 .canvas-card {
     box-sizing: border-box;        /* IMPORTANT: include border in size */
-    display: flex;
-    align-items: stretch;          /* make inner fill height */
-    justify-content: center;
-    flex: 0 0 auto;
     border-radius: 10px;
     background-color: #fff;
     overflow: hidden;

@@ -47,6 +47,12 @@
                 class="canvas-inner"
                 [style.width.px]="canvas.canvasWidth"
                 [style.height.px]="canvas.canvasHeight"
+                [style.padding.px]="canvas.distanceFromBorders"
+                [style.display]="'grid'"
+                [style.gridTemplateColumns]="'repeat(' + cardsPerRowNum + ', ' + canvas.cardWidth + 'px)'"
+                [style.gridAutoRows]="canvas.cardHeight + 'px'"
+                [style.columnGap.px]="canvas.distanceBetweenCards"
+                [style.rowGap.px]="canvas.distanceBetweenCards"
                 [style.gap.px]="canvas.distanceBetweenCards"
             >
                 <div

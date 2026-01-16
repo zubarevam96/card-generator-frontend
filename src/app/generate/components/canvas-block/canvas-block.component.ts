@@ -26,6 +26,8 @@ export class CanvasBlockComponent {
   selectedTemplate: Template | null = null;
   isEditingTemplate = false;
   cardPages: Card[][] = []; // Array of card arrays, one array per page
+  cardsPerRowNum: number = 1;
+  rowsPerPageNum: number = 1;
   templates: Template[] = [];
   showJsonModal = false;
   jsonModalTitle = '';
@@ -79,11 +81,20 @@ export class CanvasBlockComponent {
     const cardHeight = this.canvas.cardHeight;
     const canvasWidth = this.canvas.canvasWidth;
     const canvasHeight = this.canvas.canvasHeight;
+    const margin = this.canvas.distanceFromBorders ?? 0;
+
+    // Calculate available area inside margins
+    const availableWidth = Math.max(0, canvasWidth - margin * 2);
+    const availableHeight = Math.max(0, canvasHeight - margin * 2);
 
     // Calculate how many cards fit horizontally and vertically per page
-    const cardsPerRow = Math.floor((canvasWidth + gap) / (cardWidth + gap));
-    const rowsPerPage = Math.floor((canvasHeight + gap) / (cardHeight + gap));
+    const cardsPerRow = Math.max(1, Math.floor((availableWidth + gap) / (cardWidth + gap)));
+    const rowsPerPage = Math.max(1, Math.floor((availableHeight + gap) / (cardHeight + gap)));
     const cardsPerPage = cardsPerRow * rowsPerPage;
+
+    // Store computed values for template bindings (grid layout)
+    this.cardsPerRowNum = cardsPerRow;
+    this.rowsPerPageNum = rowsPerPage;
 
     if (cardsPerRow <= 0 || rowsPerPage <= 0 || cardsPerPage <= 0) {
       // Cards don't fit at all, show at least one card per page
@@ -251,7 +262,8 @@ export class CanvasBlockComponent {
       cardHeight: canvas.cardHeight,
       canvasWidth: canvas.canvasWidth,
       canvasHeight: canvas.canvasHeight,
-      distanceBetweenCards: canvas.distanceBetweenCards
+      distanceBetweenCards: canvas.distanceBetweenCards,
+      distanceFromBorders: canvas.distanceFromBorders
     };
   }
 

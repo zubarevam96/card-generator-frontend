@@ -263,7 +263,8 @@ export class CanvasService {
       config?.cardHeight ?? undefined,
       config?.canvasWidth ?? undefined,
       config?.canvasHeight ?? undefined,
-      config?.distanceBetweenCards ?? undefined
+      config?.distanceBetweenCards ?? undefined,
+      config?.distanceFromBorders ?? undefined
     );
     const canvases = [...this.canvasesSubject.value, newCanvas];
     this.canvasesSubject.next(canvases);
@@ -281,7 +282,8 @@ export class CanvasService {
       canvasData.cardHeight ?? undefined,
       canvasData.canvasWidth ?? undefined,
       canvasData.canvasHeight ?? undefined,
-      canvasData.distanceBetweenCards ?? undefined
+      canvasData.distanceBetweenCards ?? undefined,
+      canvasData.distanceFromBorders ?? undefined
     );
 
     const canvases = [...this.canvasesSubject.value, importedCanvas];

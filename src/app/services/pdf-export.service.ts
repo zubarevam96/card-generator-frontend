@@ -20,12 +20,16 @@ export class PdfExportService {
       return;
     }
 
-    // Calculate layout metrics
+    // Calculate layout metrics (account for distanceFromBorders as margins)
+    const margin = canvas.distanceFromBorders ?? 0;
+    const availableWidth = Math.max(0, canvas.canvasWidth - margin * 2);
+    const availableHeight = Math.max(0, canvas.canvasHeight - margin * 2);
+
     const cardWidthWithGap = canvas.cardWidth + canvas.distanceBetweenCards;
-    const cardsPerRow = Math.floor((canvas.canvasWidth + canvas.distanceBetweenCards) / cardWidthWithGap);
-    
+    const cardsPerRow = Math.max(1, Math.floor((availableWidth + canvas.distanceBetweenCards) / cardWidthWithGap));
+
     const cardHeightWithGap = canvas.cardHeight + canvas.distanceBetweenCards;
-    const rowsPerPage = Math.floor((canvas.canvasHeight + canvas.distanceBetweenCards) / cardHeightWithGap);
+    const rowsPerPage = Math.max(1, Math.floor((availableHeight + canvas.distanceBetweenCards) / cardHeightWithGap));
     
     const cardsPerPage = cardsPerRow * rowsPerPage;
 
@@ -86,7 +90,8 @@ export class PdfExportService {
           // Create container for this page
           const container = this.createPageContainer(pageCards, canvas, cardsPerRow);
           
-          html2canvas(container, {
+                // Render the container (which includes padding for margins)
+                html2canvas(container, {
             scale: 2,
             useCORS: true,
             logging: false,
@@ -128,10 +133,13 @@ export class PdfExportService {
     container.style.padding = '0';
     container.style.margin = '0';
     container.style.boxSizing = 'border-box';
-    container.style.display = 'flex';
-    container.style.flexWrap = 'wrap';
-    container.style.alignItems = 'flex-start';
-    container.style.gap = canvas.distanceBetweenCards + 'px';
+      container.style.display = 'grid';
+      container.style.gridTemplateColumns = `repeat(${Math.max(1, cardsPerRow)}, ${canvas.cardWidth}px)`;
+      container.style.gridAutoRows = canvas.cardHeight + 'px';
+      container.style.columnGap = canvas.distanceBetweenCards + 'px';
+      container.style.rowGap = canvas.distanceBetweenCards + 'px';
+    // Apply padding equal to distanceFromBorders so cards are placed inside page margins
+    container.style.padding = (canvas.distanceFromBorders ?? 0) + 'px';
     container.style.overflow = 'hidden';
     document.body.appendChild(container);
 
@@ -140,7 +148,6 @@ export class PdfExportService {
       const cardDiv = document.createElement('div');
       cardDiv.style.width = canvas.cardWidth + 'px';
       cardDiv.style.height = canvas.cardHeight + 'px';
-      cardDiv.style.flexShrink = '0';
       cardDiv.style.boxSizing = 'border-box';
       cardDiv.style.overflow = 'hidden';
       cardDiv.style.border = '1px solid #ddd';

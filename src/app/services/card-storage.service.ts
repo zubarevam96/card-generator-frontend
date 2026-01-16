@@ -193,7 +193,7 @@ export class CardStorageService {
     const stored = localStorage.getItem('savedCanvases');
     if (stored) {
       const parsed = JSON.parse(stored);
-      return parsed.map((c: any) => new Canvas(c.name, c.cardWidth, c.cardHeight, c.canvasWidth, c.canvasHeight, c.distanceBetweenCards, c.id));
+      return parsed.map((c: any) => new Canvas(c.name, c.cardWidth, c.cardHeight, c.canvasWidth, c.canvasHeight, c.distanceBetweenCards, c.distanceFromBorders ?? 10, c.id));
     }
     // Return default canvas if none exist
     return [new Canvas('Canvas 1')];

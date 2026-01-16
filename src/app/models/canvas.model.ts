@@ -8,6 +8,7 @@ export class Canvas {
     canvasWidth: number;
     canvasHeight: number;
     distanceBetweenCards: number
+    distanceFromBorders: number;
 
     constructor(
         name: string = 'Canvas',
@@ -16,6 +17,7 @@ export class Canvas {
         canvasWidth: number = 595,
         canvasHeight: number = 842,
         distanceBetweenCards: number = 5,
+        distanceFromBorders: number = 10,
         id?: number
     ) {
         if (id) {
@@ -30,5 +32,6 @@ export class Canvas {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
         this.distanceBetweenCards = distanceBetweenCards;
+        this.distanceFromBorders = distanceFromBorders;
     }
 }

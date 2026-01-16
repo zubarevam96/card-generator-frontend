@@ -48,6 +48,13 @@
         </label>
     </div>
 
+    <div class="property-group">
+        <label>
+            Distance from borders (px):
+            <input type="number" [(ngModel)]="canvas.distanceFromBorders" (input)="updateCanvas()" />
+        </label>
+    </div>
+
     <div class="presets card-presets">
         <h5>Card Size Presets (Eurogame)</h5>
         <div class="preset-row">
