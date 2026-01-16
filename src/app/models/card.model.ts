@@ -5,6 +5,7 @@ export class Card {
   name: string;
   templateHtml: string;
   variables: { [key: string]: string };
+  variableFontSizes: { [key: string]: number };
   templateId: number; // Always required for cards - cards must be linked to a template
   canvasId: number; // Canvas this card belongs to
 
@@ -14,7 +15,8 @@ export class Card {
     templateId: number,
     id?: number,
     variables: { [key: string]: string } = {},
-    canvasId: number = 1
+    canvasId: number = 1,
+    variableFontSizes: { [key: string]: number } = {}
   ) {
     if (id) {
       this.id = id;
@@ -27,12 +29,20 @@ export class Card {
     this.templateId = templateId;
     this.canvasId = canvasId;
     this.variables = { ...variables }; // Create a new object to ensure proper reference
+    this.variableFontSizes = { ...variableFontSizes };
   }
 
   get renderedHtml(): string {
     let html = this.templateHtml;
     for (const [key, value] of Object.entries(this.variables)) {
-      html = html.replace(new RegExp(`{{${key}}}`, 'g'), value);
+      const fontSize = this.variableFontSizes?.[key];
+      const replacement = fontSize !== undefined && fontSize !== null
+        ? (() => {
+            const lineHeight = Math.round(fontSize * 1.2) || fontSize || 12; // tighten lines relative to smaller text
+            return `<span style="font-size: ${fontSize}px; line-height: ${lineHeight}px; display: inline-block;">${value}</span>`;
+          })()
+        : value;
+      html = html.replace(new RegExp(`{{${key}}}`, 'g'), replacement);
     }
     return html;
   }

@@ -1,9 +1,10 @@
 .generate-layout {
     display: grid;
     grid-template-columns: 1fr 2fr 1fr;
-    height: 100vh;
+    min-height: 100vh;
     gap: 12px;
     padding: 12px;
+    align-items: start;
 }
 
 .side {
@@ -12,6 +13,10 @@
     border-radius: 6px;
     padding: 8px;
     overflow-y: auto;
+    position: sticky;
+    top: 12px;
+    align-self: start;
+    max-height: calc(100vh - 24px);
 }
 
 .center {

@@ -64,9 +64,15 @@ export class CanvasService {
     this.selectedCardSubject.next(null);
   }
 
-  addCard(name: string, templateHtml: string, templateId: number, variables: { [key: string]: string } = {}): Card {
+  addCard(
+    name: string,
+    templateHtml: string,
+    templateId: number,
+    variables: { [key: string]: string } = {},
+    variableFontSizes: { [key: string]: number } = {}
+  ): Card {
     const canvasId = this.selectedCanvasSubject.value.id;
-    const card = this.cardStorageService.addCard(name, templateHtml, templateId, variables, canvasId);
+    const card = this.cardStorageService.addCard(name, templateHtml, templateId, variables, canvasId, variableFontSizes);
     return card;
   }
 
@@ -98,6 +104,19 @@ export class CanvasService {
     const selected = this.selectedCardSubject.value;
     if (selected) {
       selected.variables[key] = value;
+      this.cardsSubject.next([...this.cardsSubject.value]);
+      this.cardStorageService.updateCard(selected);
+    }
+  }
+
+  updateSelectedVariableFontSize(key: string, size: number | null) {
+    const selected = this.selectedCardSubject.value;
+    if (selected) {
+      if (size === null || Number.isNaN(size)) {
+        delete selected.variableFontSizes[key];
+      } else {
+        selected.variableFontSizes[key] = size;
+      }
       this.cardsSubject.next([...this.cardsSubject.value]);
       this.cardStorageService.updateCard(selected);
     }
@@ -205,12 +224,17 @@ export class CanvasService {
     allCards.forEach(card => {
       if (card.templateId === template.id) {
         const updatedVariables = { ...card.variables };
+        const updatedFontSizes = { ...card.variableFontSizes };
 
         // Handle renames
         for (const [oldKey, newKey] of Object.entries(renameMap)) {
           if (updatedVariables[oldKey] !== undefined) {
             updatedVariables[newKey] = updatedVariables[oldKey];
             delete updatedVariables[oldKey];
+          }
+          if (updatedFontSizes[oldKey] !== undefined) {
+            updatedFontSizes[newKey] = updatedFontSizes[oldKey];
+            delete updatedFontSizes[oldKey];
           }
         }
 
@@ -225,6 +249,7 @@ export class CanvasService {
         for (const key of removed) {
           if (!renameMap[key]) {
             delete updatedVariables[key];
+            delete updatedFontSizes[key];
           }
         }
 
@@ -234,7 +259,8 @@ export class CanvasService {
           card.templateId,
           card.id,
           updatedVariables,
-          card.canvasId
+          card.canvasId,
+          updatedFontSizes
         );
         // Persist the updated card
         this.cardStorageService.updateCard(updatedCard);
@@ -314,7 +340,8 @@ export class CanvasService {
       const cardName = c?.name && c.name.trim().length > 0 ? c.name : `Imported Card ${index + 1}`;
       const cardHtml = c?.templateHtml ?? '';
       const cardVars = c?.variables ?? {};
-      this.cardStorageService.addCard(cardName, cardHtml, mappedTemplateId, { ...cardVars }, importedCanvas.id);
+      const cardFontSizes = c?.variableFontSizes ?? {};
+      this.cardStorageService.addCard(cardName, cardHtml, mappedTemplateId, { ...cardVars }, importedCanvas.id, { ...cardFontSizes });
     });
 
     this.selectedCanvasSubject.next(importedCanvas);

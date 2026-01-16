@@ -9,11 +9,13 @@ import { Card } from '../../../../models/card.model';
   selector: 'app-card-properties',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './card-properties.component.html'
+  templateUrl: './card-properties.component.html',
+  styleUrls: ['./card-properties.component.css']
 })
 export class CardPropertiesComponent {
   cardName = '';
   localVariables: { [key: string]: string } = {};
+  localFontSizes: { [key: string]: number | null } = {};
   variableKeys: string[] = [];
   private placeholderRegex = /{{(\w+)}}/g;
 
@@ -25,8 +27,11 @@ export class CardPropertiesComponent {
         const extractedKeys = this.extractPlaceholderKeys(card.templateHtml);
         // Initialize variables with existing values or empty strings
         this.localVariables = {};
+        this.localFontSizes = {};
         extractedKeys.forEach(key => {
           this.localVariables[key] = card.variables[key] || '';
+          const size = card.variableFontSizes?.[key];
+          this.localFontSizes[key] = size !== undefined ? size : null;
         });
         this.variableKeys = extractedKeys;
       }
@@ -39,6 +44,18 @@ export class CardPropertiesComponent {
 
   onVariableChange(key: string) {
     this.canvasService.updateSelectedVariable(key, this.localVariables[key]);
+  }
+
+  onFontSizeChange(key: string, value: number | string | null) {
+    if (value === null || value === '') {
+      this.localFontSizes[key] = null;
+      this.canvasService.updateSelectedVariableFontSize(key, null);
+      return;
+    }
+
+    const numeric = Number(value);
+    this.localFontSizes[key] = Number.isFinite(numeric) ? numeric : null;
+    this.canvasService.updateSelectedVariableFontSize(key, this.localFontSizes[key]);
   }
 
   editTemplate() {

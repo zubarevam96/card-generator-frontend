@@ -283,6 +283,7 @@ export class CanvasBlockComponent {
       name: card.name,
       templateHtml: card.templateHtml,
       variables: card.variables,
+      variableFontSizes: card.variableFontSizes,
       templateId: card.templateId,
       canvasId: card.canvasId
     };

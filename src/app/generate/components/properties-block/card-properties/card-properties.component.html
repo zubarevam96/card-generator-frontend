@@ -14,6 +14,17 @@
                 placeholder="Enter value..."
                 rows="3"
             ></textarea>
+            <label class="sub-label">Font size (px, optional):</label>
+            <input
+                type="number"
+                min="6"
+                max="72"
+                step="1"
+                class="font-size-input"
+                [ngModel]="localFontSizes[key]"
+                (ngModelChange)="onFontSizeChange(key, $event)"
+                placeholder="default"
+            />
         </div>
         <button (click)="editTemplate()">Edit Template</button>
     </ng-container>

@@ -35,9 +35,16 @@ export class CardStorageService {
   }
 
   // Add a new card
-  addCard(name: string, templateHtml: string, templateId: number, variables: { [key: string]: string } = {}, canvasId: number = 1): Card {
+  addCard(
+    name: string,
+    templateHtml: string,
+    templateId: number,
+    variables: { [key: string]: string } = {},
+    canvasId: number = 1,
+    variableFontSizes: { [key: string]: number } = {}
+  ): Card {
     console.log('[CardStorageService] addCard called:', name, 'templateId:', templateId, 'canvasId:', canvasId);
-    const card = new Card(name, templateHtml, templateId, undefined, variables, canvasId);
+    const card = new Card(name, templateHtml, templateId, undefined, variables, canvasId, variableFontSizes);
     const current = this.cardsSubject.value;
     this.cardsSubject.next([...current, card]);
     this.saveCardsToStorage();
@@ -69,7 +76,15 @@ export class CardStorageService {
   updateCard(updatedCard: Card) {
     const current = this.cardsSubject.value.map(c =>
       c.id === updatedCard.id
-        ? new Card(updatedCard.name, updatedCard.templateHtml, updatedCard.templateId, updatedCard.id, updatedCard.variables, updatedCard.canvasId)
+        ? new Card(
+            updatedCard.name,
+            updatedCard.templateHtml,
+            updatedCard.templateId,
+            updatedCard.id,
+            updatedCard.variables,
+            updatedCard.canvasId,
+            updatedCard.variableFontSizes
+          )
         : c
     );
     this.cardsSubject.next(current);
@@ -174,7 +189,17 @@ export class CardStorageService {
     if (stored) {
       const parsed = JSON.parse(stored);
       console.log('[LoadCards] Loaded cards count:', parsed.length);
-      return parsed.map((c: any) => new Card(c.name, c.templateHtml, c.templateId, c.id, c.variables || {}, c.canvasId ?? 1));
+      return parsed.map((c: any) =>
+        new Card(
+          c.name,
+          c.templateHtml,
+          c.templateId,
+          c.id,
+          c.variables || {},
+          c.canvasId ?? 1,
+          c.variableFontSizes || {}
+        )
+      );
     }
     return [];
   }
