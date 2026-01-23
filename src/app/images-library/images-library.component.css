@@ -1,0 +1,135 @@
+.page {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+h1 {
+  margin: 0 0 4px;
+  font-size: 24px;
+}
+
+p {
+  margin: 0;
+  color: #4c4c4c;
+}
+
+.upload {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #0d6efd;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.upload:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-bottom: 1px solid #e3e3e3;
+}
+
+.card__meta {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card__title {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.card__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.card__actions button {
+  border: 1px solid #d0d0d0;
+  background: #f8f8f8;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.card__actions button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.card__actions .danger {
+  background: #fff1f0;
+  border-color: #ffc0bd;
+  color: #c0352b;
+}
+
+.url {
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  padding: 8px;
+  font-family: monospace;
+  font-size: 12px;
+  resize: vertical;
+  background: #fdfdfd;
+}
+
+.empty {
+  border: 1px dashed #c0c0c0;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  color: #5a5a5a;
+  background: #fafafa;
+}

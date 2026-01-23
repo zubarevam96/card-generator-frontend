@@ -1,0 +1,37 @@
+<div class="page">
+  <header class="page__header">
+    <div>
+      <h1>Image Library</h1>
+      <p>Upload images from your disk and reuse their data URLs anywhere in the app.</p>
+    </div>
+    <label class="upload">
+      <input type="file" accept="image/*" multiple (change)="onFilesSelected($event)" />
+      <span>{{ isUploading ? 'Uploading…' : 'Add images' }}</span>
+    </label>
+  </header>
+
+  <ng-container *ngIf="images$ | async as images">
+    <section *ngIf="images.length; else empty">
+      <div class="grid">
+        <article class="card" *ngFor="let image of images">
+          <img [src]="image.dataUrl" [alt]="image.name" loading="lazy" />
+          <div class="card__meta">
+            <div class="card__title">{{ image.name }}</div>
+            <div class="card__actions">
+              <button type="button" (click)="copyUrl(image)">{{ copiedId === image.id ? 'Copied' : 'Copy URL' }}</button>
+              <button type="button" class="danger" (click)="deleteImage(image.id)">Delete</button>
+            </div>
+            <textarea class="url" readonly [value]="image.dataUrl"></textarea>
+          </div>
+        </article>
+      </div>
+    </section>
+  </ng-container>
+
+  <ng-template #empty>
+    <div class="empty">
+      <p>No images uploaded yet.</p>
+      <p>Click "Add images" to pick one or more files from your computer.</p>
+    </div>
+  </ng-template>
+</div>
