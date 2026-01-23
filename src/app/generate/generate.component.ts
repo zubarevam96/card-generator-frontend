@@ -3,15 +3,18 @@ import { CommonModule } from '@angular/common';
 import { PropertiesBlockComponent } from './components/properties-block/properties-block.component';
 import { CanvasBlockComponent } from './components/canvas-block/canvas-block.component';
 import { TemplatesBlockComponent } from './components/templates-block/templates-block.component';
+import { ImagesLibraryComponent } from '../images-library/images-library.component';
 
 @Component({
   selector: 'app-generate',
   standalone: true,
-  imports: [CommonModule, PropertiesBlockComponent, CanvasBlockComponent, TemplatesBlockComponent],
+  imports: [CommonModule, PropertiesBlockComponent, CanvasBlockComponent, TemplatesBlockComponent, ImagesLibraryComponent],
   templateUrl: './generate.component.html',
   styleUrls: ['./generate.component.css']
 })
 export class GenerateComponent {
+  activeTab: 'canvas' | 'images' = 'canvas';
+  
   showProperties = true;
   showTemplates = true;
 
@@ -47,6 +50,10 @@ export class GenerateComponent {
     if (!this.showTemplates) {
       this.draggingSide = null;
     }
+  }
+
+  switchTab(tab: 'canvas' | 'images'): void {
+    this.activeTab = tab;
   }
 
   startDrag(side: 'left' | 'right', event: MouseEvent): void {

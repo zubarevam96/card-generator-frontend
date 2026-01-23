@@ -1,3 +1,33 @@
+.global-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 12px 12px 0 12px;
+    background: #f8f8f8;
+    border-bottom: 2px solid #ddd;
+}
+
+.global-tab {
+    padding: 10px 20px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    color: #666;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.global-tab:hover {
+    color: #333;
+    background: #efefef;
+}
+
+.global-tab.active {
+    color: #2196f3;
+    border-bottom-color: #2196f3;
+}
+
 .generate-layout {
     display: grid;
     grid-template-columns: 1fr 8px 2fr 8px 1fr;
@@ -127,4 +157,9 @@
 
 .divider.inactive::after {
     opacity: 0.35;
+}
+
+.images-view {
+    min-height: 100vh;
+    padding: 12px;
 }

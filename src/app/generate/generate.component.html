@@ -1,4 +1,21 @@
-<div class="generate-layout" [style.gridTemplateColumns]="gridTemplateColumns">
+<div class="global-tabs">
+    <button 
+        class="global-tab" 
+        [class.active]="activeTab === 'canvas'"
+        (click)="switchTab('canvas')"
+    >
+        Canvas
+    </button>
+    <button 
+        class="global-tab" 
+        [class.active]="activeTab === 'images'"
+        (click)="switchTab('images')"
+    >
+        Images
+    </button>
+</div>
+
+<div class="generate-layout" *ngIf="activeTab === 'canvas'" [style.gridTemplateColumns]="gridTemplateColumns">
     <aside class="side left" [class.collapsed]="!showProperties">
         <ng-container *ngIf="showProperties; else collapsedLeft">
             <div class="side-header">
@@ -36,4 +53,8 @@
             <button class="rail-toggle" type="button" (click)="toggleTemplates()">Show templates</button>
         </ng-template>
     </aside>
+</div>
+
+<div class="images-view" *ngIf="activeTab === 'images'">
+    <app-images-library></app-images-library>
 </div>
