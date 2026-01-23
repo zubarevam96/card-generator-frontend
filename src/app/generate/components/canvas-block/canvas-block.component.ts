@@ -9,6 +9,7 @@ import { ViewEncapsulation } from '@angular/core';
 import { Canvas } from '../../../models/canvas.model';
 import { CardStorageService } from '../../../services/card-storage.service';
 import { JsonModalComponent } from '../../../shared/json-modal/json-modal.component';
+import { AliasService } from '../../../services/alias.service';
 
 @Component({
   selector: 'app-canvas-block',
@@ -39,7 +40,8 @@ export class CanvasBlockComponent {
     private canvasService: CanvasService,
     private sanitizer: DomSanitizer,
     private pdfExportService: PdfExportService,
-    private cardStorageService: CardStorageService
+    private cardStorageService: CardStorageService,
+    private aliasService: AliasService
   ) {
     this.canvasService.canvases$.subscribe(canvases => {
       this.canvases = canvases;
@@ -110,7 +112,8 @@ export class CanvasBlockComponent {
   }
 
   getSafeHtml(card: Card): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(card.renderedHtml);
+    const resolvedHtml = this.aliasService.applyAliasesToHtml(card.renderedHtml);
+    return this.sanitizer.bypassSecurityTrustHtml(resolvedHtml);
   }
 
   getPreviewSafeHtml(): SafeHtml {
@@ -121,7 +124,8 @@ export class CanvasBlockComponent {
     for (const [key, value] of Object.entries(variables)) {
       html = html.replace(new RegExp(`{{${key}}}`, 'g'), value);
     }
-    return this.sanitizer.bypassSecurityTrustHtml(html);
+    const resolvedHtml = this.aliasService.applyAliasesToHtml(html);
+    return this.sanitizer.bypassSecurityTrustHtml(resolvedHtml);
   }
 
   private parseTemplateHtml(html: string): { cleanedHtml: string; variables: { [key: string]: string } } {

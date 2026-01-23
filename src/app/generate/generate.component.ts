@@ -1,19 +1,20 @@
 import { Component, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgIf } from '@angular/common';
 import { PropertiesBlockComponent } from './components/properties-block/properties-block.component';
 import { CanvasBlockComponent } from './components/canvas-block/canvas-block.component';
 import { TemplatesBlockComponent } from './components/templates-block/templates-block.component';
 import { ImagesLibraryComponent } from '../images-library/images-library.component';
+import { AliasLibraryComponent } from '../alias-library/alias-library.component';
 
 @Component({
   selector: 'app-generate',
   standalone: true,
-  imports: [CommonModule, PropertiesBlockComponent, CanvasBlockComponent, TemplatesBlockComponent, ImagesLibraryComponent],
+  imports: [CommonModule, PropertiesBlockComponent, CanvasBlockComponent, TemplatesBlockComponent, ImagesLibraryComponent, AliasLibraryComponent],
   templateUrl: './generate.component.html',
   styleUrls: ['./generate.component.css']
 })
 export class GenerateComponent {
-  activeTab: 'canvas' | 'images' = 'canvas';
+  activeTab: 'canvas' | 'images' | 'aliases' = 'canvas';
   
   showProperties = true;
   showTemplates = true;
@@ -52,7 +53,7 @@ export class GenerateComponent {
     }
   }
 
-  switchTab(tab: 'canvas' | 'images'): void {
+  switchTab(tab: 'canvas' | 'images' | 'aliases'): void {
     this.activeTab = tab;
   }
 

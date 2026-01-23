@@ -13,11 +13,20 @@
     >
         Images
     </button>
+    <button 
+        class="global-tab" 
+        [class.active]="activeTab === 'aliases'"
+        (click)="switchTab('aliases')"
+    >
+        Aliases
+    </button>
 </div>
 
-<div class="generate-layout" *ngIf="activeTab === 'canvas'" [style.gridTemplateColumns]="gridTemplateColumns">
+<div class="active-tab-debug">Active tab: {{ activeTab }}</div>
+
+<div class="generate-layout" [hidden]="activeTab !== 'canvas'" [style.gridTemplateColumns]="gridTemplateColumns">
     <aside class="side left" [class.collapsed]="!showProperties">
-        <ng-container *ngIf="showProperties; else collapsedLeft">
+        <div [hidden]="!showProperties">
             <div class="side-header">
                 <span class="side-title">Properties</span>
                 <button type="button" (click)="toggleProperties()">Hide</button>
@@ -25,10 +34,10 @@
             <div class="side-body">
                 <app-properties-block></app-properties-block>
             </div>
-        </ng-container>
-        <ng-template #collapsedLeft>
+        </div>
+        <div [hidden]="showProperties">
             <button class="rail-toggle" type="button" (click)="toggleProperties()">Show properties</button>
-        </ng-template>
+        </div>
     </aside>
 
     <div class="divider" [class.inactive]="!showProperties" (mousedown)="startDrag('left', $event)"></div>
@@ -40,7 +49,7 @@
     <div class="divider" [class.inactive]="!showTemplates" (mousedown)="startDrag('right', $event)"></div>
 
     <aside class="side right" [class.collapsed]="!showTemplates">
-        <ng-container *ngIf="showTemplates; else collapsedRight">
+        <div [hidden]="!showTemplates">
             <div class="side-header">
                 <span class="side-title">Templates</span>
                 <button type="button" (click)="toggleTemplates()">Hide</button>
@@ -48,13 +57,18 @@
             <div class="side-body">
                 <app-templates-block></app-templates-block>
             </div>
-        </ng-container>
-        <ng-template #collapsedRight>
+        </div>
+        <div [hidden]="showTemplates">
             <button class="rail-toggle" type="button" (click)="toggleTemplates()">Show templates</button>
-        </ng-template>
+        </div>
     </aside>
 </div>
 
-<div class="images-view" *ngIf="activeTab === 'images'">
+<div class="images-view" [hidden]="activeTab !== 'images'">
     <app-images-library></app-images-library>
+</div>
+
+<div class="aliases-view" [hidden]="activeTab !== 'aliases'">
+    <div class="aliases-placeholder">Aliases content</div>
+    <app-alias-library></app-alias-library>
 </div>

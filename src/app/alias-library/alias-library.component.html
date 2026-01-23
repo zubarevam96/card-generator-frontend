@@ -1,0 +1,68 @@
+<div class="alias-library">
+    <div class="alias-header">
+        <h3>Aliases</h3>
+        <div class="header-actions">
+            <button type="button" (click)="showTextForm = !showTextForm" class="add-btn">
+                {{ showTextForm ? 'Cancel' : '+ Text' }}
+            </button>
+            <button type="button" (click)="imageInput.click()" class="add-btn">+ Image</button>
+            <input #imageInput type="file" accept="image/*" hidden (change)="onImageSelected($event)">
+        </div>
+    </div>
+
+    <div class="form-section" *ngIf="showTextForm">
+        <div class="form-group">
+            <label>Alias Name</label>
+            <input type="text" [(ngModel)]="textForm.name" placeholder="e.g., Rare Badge">
+        </div>
+        <div class="form-group">
+            <label>HTML Content</label>
+            <textarea [(ngModel)]="textForm.content" placeholder="e.g., &lt;div style=&quot;color:red&quot;&gt;Text&lt;/div&gt;" rows="4"></textarea>
+        </div>
+        <button type="button" (click)="addTextAlias()" class="save-btn">Save Text</button>
+    </div>
+
+    <div class="aliases-list">
+        <div class="list-section">
+            <h4>Text Aliases</h4>
+            <div class="alias-item" *ngFor="let al of (textAliases$ | async)">
+                <div class="text-alias">
+                    <div class="alias-name">{{ al.name }}</div>
+                    <div class="alias-preview" [innerHTML]="al.content"></div>
+                    <div class="alias-reference">Reference: <code>{{ '{' }}alias_{{ al.id }}_text{{ '}' }}</code></div>
+                    <button type="button" (click)="deleteAlias(al.id)" class="delete-btn">Delete</button>
+                </div>
+            </div>
+            <div class="empty-state" *ngIf="!(hasTextAliases$ | async)">
+                No text aliases yet
+            </div>
+        </div>
+
+        <div class="list-section">
+            <h4>Image Aliases</h4>
+            <div class="alias-item" *ngFor="let al of (imageAliases$ | async)">
+                <div class="image-alias">
+                    <div class="alias-name">{{ al.name }}</div>
+                    <div class="image-preview-wrapper">
+                        <img [src]="al.dataUrl" [alt]="al.name" class="image-preview">
+                    </div>
+                    <div class="alias-reference">Reference: <code>{{ '{' }}alias_{{ al.id }}_img{{ '}' }}</code></div>
+                    <div class="size-control">
+                        <label>Size:</label>
+                        <input type="number" [value]="al.defaultSize" (change)="updateImageSize(al.id, +$event.target.value)" min="4" max="128">
+                        <span>px</span>
+                    </div>
+                    <button type="button" (click)="deleteAlias(al.id)" class="delete-btn">Delete</button>
+                </div>
+            </div>
+            <div class="empty-state" *ngIf="!(hasImageAliases$ | async)">
+                No image aliases yet
+            </div>
+        </div>
+    </div>
+
+    <div class="alias-fab">
+        <button type="button" class="fab-btn" (click)="showTextForm = true">+ Text</button>
+        <button type="button" class="fab-btn" (click)="imageInput.click()">+ Image</button>
+    </div>
+</div>

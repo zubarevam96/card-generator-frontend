@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Card } from '../models/card.model';
 import { Canvas } from '../models/canvas.model';
+import { AliasService } from './alias.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PdfExportService {
-  constructor() {}
+  constructor(private aliasService: AliasService) {}
 
   /**
    * Export cards to PDF based on Canvas dimensions
@@ -155,7 +156,7 @@ export class PdfExportService {
       cardDiv.style.backgroundColor = '#fff';
       cardDiv.style.position = 'relative';
       cardDiv.style.zIndex = '10';
-      cardDiv.innerHTML = card.renderedHtml;
+      cardDiv.innerHTML = this.aliasService.applyAliasesToHtml(card.renderedHtml);
       container.appendChild(cardDiv);
 
       this.addCropMarks(container, index, canvas, cardsPerRow);
