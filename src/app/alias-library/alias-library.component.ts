@@ -39,7 +39,11 @@ export class AliasLibraryComponent {
       return;
     }
 
-    this.aliasService.addTextAlias(this.textForm.name, this.textForm.content);
+    const added = this.aliasService.addTextAlias(this.textForm.name, this.textForm.content);
+    if (!added) {
+      alert('Alias name already exists. Please choose a unique name.');
+      return;
+    }
     this.textForm = { name: '', content: '' };
     this.showTextForm = false;
   }
@@ -55,7 +59,11 @@ export class AliasLibraryComponent {
       if (e.target?.result) {
         const dataUrl = e.target.result as string;
         const name = file.name.replace(/\.[^/.]+$/, '');
-        this.aliasService.addImageAlias(name, dataUrl, 16);
+        const added = this.aliasService.addImageAlias(name, dataUrl, 16);
+        if (!added) {
+          alert('Alias name already exists. Please rename the file or choose a different name.');
+          return;
+        }
       }
     };
 

@@ -9,7 +9,7 @@ export class AliasService {
   private static nextAliasId = 1;
   private readonly storageKey = 'savedAliases';
   private readonly legacyStorageKey = 'savedCopypastas';
-  private readonly aliasRegex = /{alias_(\d+)_(text|img)}/g;
+  private readonly aliasRegex = /(?<!{){([^{}]+)}(?!})/g;
 
   private aliasSubject = new BehaviorSubject<Alias[]>([]);
   aliases$ = this.aliasSubject.asObservable();
@@ -46,7 +46,10 @@ export class AliasService {
     localStorage.setItem(this.storageKey, JSON.stringify(aliases));
   }
 
-  addTextAlias(name: string, content: string): void {
+  addTextAlias(name: string, content: string): boolean {
+    if (this.isDuplicateName(name)) {
+      return false;
+    }
     const aliases = this.aliasSubject.value;
     const newAlias: TextAlias = {
       id: AliasService.nextAliasId++,
@@ -58,9 +61,13 @@ export class AliasService {
     aliases.push(newAlias);
     this.aliasSubject.next(aliases);
     this.saveAliases();
+    return true;
   }
 
-  addImageAlias(name: string, dataUrl: string, defaultSize: number = 16): void {
+  addImageAlias(name: string, dataUrl: string, defaultSize: number = 16): boolean {
+    if (this.isDuplicateName(name)) {
+      return false;
+    }
     const aliases = this.aliasSubject.value;
     const newAlias: ImageAlias = {
       id: AliasService.nextAliasId++,
@@ -73,6 +80,7 @@ export class AliasService {
     aliases.push(newAlias);
     this.aliasSubject.next(aliases);
     this.saveAliases();
+    return true;
   }
 
   updateAlias(id: number, updates: Partial<Alias>): void {
@@ -100,8 +108,9 @@ export class AliasService {
     this.saveAliases();
   }
 
-  getAliasReference(id: number): string {
-    const alias = this.aliasSubject.value.find(al => al.id === id);
+  getAliasReference(name: string): string {
+    const normalized = this.normalizeName(name);
+    const alias = this.aliasSubject.value.find(al => this.normalizeName(al.name) === normalized);
     if (!alias) return '';
 
     if (alias.type === 'text') {
@@ -117,13 +126,20 @@ export class AliasService {
     const aliases = this.aliasSubject.value;
     if (!aliases.length) return html;
 
-    return html.replace(this.aliasRegex, (match, idText: string, type: string) => {
-      const id = Number(idText);
-      const alias = aliases.find(al => al.id === id);
+    return html.replace(this.aliasRegex, (match, nameText: string) => {
+      const normalized = this.normalizeName(nameText);
+      const alias = aliases.find(al => this.normalizeName(al.name) === normalized);
       if (!alias) return match;
-      if (type === 'text' && alias.type !== 'text') return match;
-      if (type === 'img' && alias.type !== 'image') return match;
-      return this.getAliasReference(id);
+      return this.getAliasReference(alias.name);
     });
+  }
+
+  private normalizeName(name: string): string {
+    return name.trim().toLowerCase();
+  }
+
+  private isDuplicateName(name: string): boolean {
+    const normalized = this.normalizeName(name);
+    return this.aliasSubject.value.some(al => this.normalizeName(al.name) === normalized);
   }
 }

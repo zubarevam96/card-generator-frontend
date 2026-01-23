@@ -29,7 +29,6 @@
                 <div class="text-alias">
                     <div class="alias-name">{{ al.name }}</div>
                     <div class="alias-preview" [innerHTML]="al.content"></div>
-                    <div class="alias-reference">Reference: <code>{{ '{' }}alias_{{ al.id }}_text{{ '}' }}</code></div>
                     <button type="button" (click)="deleteAlias(al.id)" class="delete-btn">Delete</button>
                 </div>
             </div>
@@ -46,7 +45,6 @@
                     <div class="image-preview-wrapper">
                         <img [src]="al.dataUrl" [alt]="al.name" class="image-preview">
                     </div>
-                    <div class="alias-reference">Reference: <code>{{ '{' }}alias_{{ al.id }}_img{{ '}' }}</code></div>
                     <div class="size-control">
                         <label>Size:</label>
                         <input type="number" [value]="al.defaultSize" (change)="updateImageSize(al.id, +$event.target.value)" min="4" max="128">
