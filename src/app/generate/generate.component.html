@@ -1,13 +1,39 @@
-<div class="generate-layout">
-    <aside class="side left">
-        <app-properties-block></app-properties-block>
+<div class="generate-layout" [style.gridTemplateColumns]="gridTemplateColumns">
+    <aside class="side left" [class.collapsed]="!showProperties">
+        <ng-container *ngIf="showProperties; else collapsedLeft">
+            <div class="side-header">
+                <span class="side-title">Properties</span>
+                <button type="button" (click)="toggleProperties()">Hide</button>
+            </div>
+            <div class="side-body">
+                <app-properties-block></app-properties-block>
+            </div>
+        </ng-container>
+        <ng-template #collapsedLeft>
+            <button class="rail-toggle" type="button" (click)="toggleProperties()">Show properties</button>
+        </ng-template>
     </aside>
+
+    <div class="divider" [class.inactive]="!showProperties" (mousedown)="startDrag('left', $event)"></div>
 
     <main class="center">
         <app-canvas-block></app-canvas-block>
     </main>
 
-    <aside class="side right">
-        <app-templates-block></app-templates-block>
+    <div class="divider" [class.inactive]="!showTemplates" (mousedown)="startDrag('right', $event)"></div>
+
+    <aside class="side right" [class.collapsed]="!showTemplates">
+        <ng-container *ngIf="showTemplates; else collapsedRight">
+            <div class="side-header">
+                <span class="side-title">Templates</span>
+                <button type="button" (click)="toggleTemplates()">Hide</button>
+            </div>
+            <div class="side-body">
+                <app-templates-block></app-templates-block>
+            </div>
+        </ng-container>
+        <ng-template #collapsedRight>
+            <button class="rail-toggle" type="button" (click)="toggleTemplates()">Show templates</button>
+        </ng-template>
     </aside>
 </div>

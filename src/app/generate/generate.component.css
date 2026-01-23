@@ -1,10 +1,11 @@
 .generate-layout {
     display: grid;
-    grid-template-columns: 1fr 2fr 1fr;
+    grid-template-columns: 1fr 8px 2fr 8px 1fr;
     min-height: 100vh;
     gap: 12px;
     padding: 12px;
     align-items: start;
+    transition: grid-template-columns 0.2s ease;
 }
 
 .side {
@@ -17,6 +18,72 @@
     top: 12px;
     align-self: start;
     max-height: calc(100vh - 24px);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.side.collapsed {
+    padding: 8px 6px;
+    border: 1px solid #e5e5e5;
+    max-height: calc(100vh - 24px);
+    overflow: visible;
+    justify-content: center;
+    align-items: center;
+}
+
+.side-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.side-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    opacity: 1;
+    transition: opacity 0.15s ease;
+}
+
+.side.collapsed .side-title {
+    opacity: 0;
+}
+
+.side-header button {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #f6f6f6;
+    cursor: pointer;
+}
+
+.side-header button:hover {
+    background: #ececec;
+}
+
+.side-body {
+    flex: 1;
+    overflow: hidden;
+}
+
+.rail-toggle {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #f6f6f6;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1.1;
+    text-align: center;
+    width: 32px;
+}
+
+.rail-toggle:hover {
+    background: #ececec;
 }
 
 .center {
@@ -24,4 +91,40 @@
     border: 1px solid #ccc;
     border-radius: 8px;
     padding: 16px;
+}
+
+.divider {
+    position: relative;
+    top: 12px;
+    height: calc(100vh - 24px);
+    background: transparent;
+    cursor: col-resize;
+}
+
+.divider::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 3px;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, #eaeaea, #cfcfcf, #eaeaea);
+    border-radius: 2px;
+    opacity: 0.9;
+    transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.divider:hover::after {
+    background: linear-gradient(180deg, #d9d9d9, #b8b8b8, #d9d9d9);
+    opacity: 1;
+}
+
+.divider.inactive {
+    cursor: default;
+    pointer-events: none;
+}
+
+.divider.inactive::after {
+    opacity: 0.35;
 }
