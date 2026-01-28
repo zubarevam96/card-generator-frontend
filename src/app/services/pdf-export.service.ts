@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import { toPng } from 'html-to-image';
+import { PDFDocument } from 'pdf-lib';
 import { Card } from '../models/card.model';
 import { Canvas } from '../models/canvas.model';
 import { AliasService } from './alias.service';
@@ -48,77 +50,54 @@ export class PdfExportService {
    * Generate PDF with card-aware page breaks
    */
   private generatePdfPages(pages: Card[][], canvas: Canvas, cardsPerRow: number, filename: string): void {
-    Promise.all([
-      this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'),
-      this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
-    ]).then(() => {
-      this.createMultiPagePdf(pages, canvas, cardsPerRow, filename);
-    }).catch(() => {
-      console.warn('PDF libraries not available');
+    this.createMultiPagePdf(pages, canvas, cardsPerRow, filename).catch(() => {
+      console.warn('PDF export failed');
     });
   }
 
   /**
    * Create PDF with multiple pages (one per page array)
    */
-  private createMultiPagePdf(pages: Card[][], canvas: Canvas, cardsPerRow: number, filename: string): void {
-    const html2canvas = (window as any).html2canvas;
-    const { jsPDF } = (window as any).jspdf;
-
-    if (!html2canvas || !jsPDF) {
-      return;
-    }
-
-    // Convert canvas dimensions to mm
+  private async createMultiPagePdf(pages: Card[][], canvas: Canvas, cardsPerRow: number, filename: string): Promise<void> {
+    const mmToPt = (mm: number) => (mm * 72) / 25.4;
     const canvasWidthMm = canvas.canvasWidth * 0.264583;
     const canvasHeightMm = canvas.canvasHeight * 0.264583;
-    const orientation = canvasWidthMm > canvasHeightMm ? 'landscape' : 'portrait';
+    const pageWidthPt = mmToPt(canvasWidthMm);
+    const pageHeightPt = mmToPt(canvasHeightMm);
 
-    // Create PDF
-    const pdf = new jsPDF({
-      orientation,
-      unit: 'mm',
-      format: [canvasWidthMm, canvasHeightMm]
-    });
+    const pdf = await PDFDocument.create();
 
-    // Process each page
-    let isFirstPage = true;
-    let pagePromise = Promise.resolve();
-
-    pages.forEach((pageCards, pageIndex) => {
-      pagePromise = pagePromise.then(() => {
-        return new Promise<void>((resolve) => {
-          // Create container for this page
-          const container = this.createPageContainer(pageCards, canvas, cardsPerRow);
-          
-                // Render the container (which includes padding for margins)
-                html2canvas(container, {
-            scale: Math.max(2, Math.floor((window as any).devicePixelRatio || 2)),
-            useCORS: true,
-            logging: false,
-            backgroundColor: '#ffffff',
-            width: canvas.canvasWidth,
-            height: canvas.canvasHeight
-          }).then((canvasElement: HTMLCanvasElement) => {
-            const imgData = canvasElement.toDataURL('image/png');
-            
-            if (!isFirstPage) {
-              pdf.addPage([canvasWidthMm, canvasHeightMm]);
-            }
-            isFirstPage = false;
-            
-            pdf.addImage(imgData, 'PNG', 0, 0, canvasWidthMm, canvasHeightMm);
-            document.body.removeChild(container);
-            
-            resolve();
-          });
+    for (const pageCards of pages) {
+      const container = this.createPageContainer(pageCards, canvas, cardsPerRow);
+      try {
+        await this.waitForNextFrame();
+        const dataUrl = await toPng(container, {
+          backgroundColor: '#ffffff',
+          cacheBust: true,
+          pixelRatio: Math.max(2, Math.floor((window as any).devicePixelRatio || 2)),
+          width: canvas.canvasWidth,
+          height: canvas.canvasHeight
         });
-      });
-    });
 
-    pagePromise.then(() => {
-      pdf.save(`${filename}.pdf`);
-    });
+        const imageBytes = this.dataUrlToUint8Array(dataUrl);
+        const pngImage = await pdf.embedPng(imageBytes);
+        const page = pdf.addPage([pageWidthPt, pageHeightPt]);
+        page.drawImage(pngImage, { x: 0, y: 0, width: pageWidthPt, height: pageHeightPt });
+      } finally {
+        document.body.removeChild(container);
+      }
+    }
+
+    const pdfBytes = await pdf.save();
+    const pdfBuffer = new ArrayBuffer(pdfBytes.byteLength);
+    new Uint8Array(pdfBuffer).set(pdfBytes);
+    const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${filename}.pdf`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   /**
@@ -126,8 +105,11 @@ export class PdfExportService {
    */
   private createPageContainer(pageCards: Card[], canvas: Canvas, cardsPerRow: number): HTMLElement {
     const container = document.createElement('div');
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
+    container.style.position = 'fixed';
+    container.style.left = '0';
+    container.style.top = '0';
+    container.style.pointerEvents = 'none';
+    container.style.zIndex = '0';
     container.style.width = canvas.canvasWidth + 'px';
     container.style.height = canvas.canvasHeight + 'px';
     container.style.background = 'white';
@@ -144,6 +126,8 @@ export class PdfExportService {
     container.style.overflow = 'hidden';
     document.body.appendChild(container);
 
+    this.addCutGuides(container, canvas, cardsPerRow);
+
     // Add cards to container
     pageCards.forEach((card, index) => {
       const cardDiv = document.createElement('div');
@@ -159,10 +143,58 @@ export class PdfExportService {
       cardDiv.innerHTML = this.aliasService.applyAliasesToHtml(card.renderedHtml);
       container.appendChild(cardDiv);
 
-      this.addCropMarks(container, index, canvas, cardsPerRow);
     });
 
     return container;
+  }
+
+  /**
+   * Add thin dotted cut guides for card boundaries on the page
+   */
+  private addCutGuides(container: HTMLElement, canvas: Canvas, cardsPerRow: number): void {
+    const padding = canvas.distanceFromBorders ?? 0;
+    const gap = canvas.distanceBetweenCards;
+    const cardWidth = canvas.cardWidth;
+    const cardHeight = canvas.cardHeight;
+
+    const availableWidth = Math.max(0, canvas.canvasWidth - padding * 2);
+    const availableHeight = Math.max(0, canvas.canvasHeight - padding * 2);
+
+    const cardsPerRowSafe = Math.max(1, cardsPerRow);
+    const rowsPerPage = Math.max(1, Math.floor((availableHeight + gap) / (cardHeight + gap)));
+
+    const color = 'rgba(0, 0, 0, 0.35)';
+    const thickness = 1;
+    const vSet = new Set<number>();
+    const hSet = new Set<number>();
+
+    // Vertical lines: left edge + right edge of each card
+    for (let col = 0; col < cardsPerRowSafe; col += 1) {
+      const left = padding + col * (cardWidth + gap);
+      const right = left + cardWidth - 1;
+      if (!vSet.has(left)) {
+        vSet.add(left);
+        this.drawVerticalGuide(container, left, canvas.canvasHeight, thickness, color, 2);
+      }
+      if (!vSet.has(right)) {
+        vSet.add(right);
+        this.drawVerticalGuide(container, right, canvas.canvasHeight, thickness, color, 2);
+      }
+    }
+
+    // Horizontal lines: top edge + bottom edge of each card row
+    for (let row = 0; row < rowsPerPage; row += 1) {
+      const top = padding + row * (cardHeight + gap);
+      const bottom = top + cardHeight - 1;
+      if (!hSet.has(top)) {
+        hSet.add(top);
+        this.drawHorizontalGuide(container, top, canvas.canvasWidth, thickness, color, 2);
+      }
+      if (!hSet.has(bottom)) {
+        hSet.add(bottom);
+        this.drawHorizontalGuide(container, bottom, canvas.canvasWidth, thickness, color, 2);
+      }
+    }
   }
 
   /**
@@ -223,7 +255,14 @@ export class PdfExportService {
     addHorizontal(bottom - 1); // bottom edge, shift up into card
   }
 
-  private drawVerticalGuide(container: HTMLElement, x: number, height: number, thickness: number, color: string): void {
+  private drawVerticalGuide(
+    container: HTMLElement,
+    x: number,
+    height: number,
+    thickness: number,
+    color: string,
+    zIndex: number = 4
+  ): void {
     const line = document.createElement('div');
     line.style.position = 'absolute';
     line.style.left = `${x}px`;
@@ -232,11 +271,18 @@ export class PdfExportService {
     line.style.height = `${height}px`;
     line.style.borderLeft = `${thickness}px dashed ${color}`;
     line.style.pointerEvents = 'none';
-    line.style.zIndex = '4';
+    line.style.zIndex = String(zIndex);
     container.appendChild(line);
   }
 
-  private drawHorizontalGuide(container: HTMLElement, y: number, width: number, thickness: number, color: string): void {
+  private drawHorizontalGuide(
+    container: HTMLElement,
+    y: number,
+    width: number,
+    thickness: number,
+    color: string,
+    zIndex: number = 4
+  ): void {
     const line = document.createElement('div');
     line.style.position = 'absolute';
     line.style.left = '0';
@@ -245,35 +291,22 @@ export class PdfExportService {
     line.style.height = '0';
     line.style.borderTop = `${thickness}px dashed ${color}`;
     line.style.pointerEvents = 'none';
-    line.style.zIndex = '4';
+    line.style.zIndex = String(zIndex);
     container.appendChild(line);
   }
 
-  /**
-   * Load external script dynamically
-   */
-  private loadScript(src: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if ((window as any)[this.getScriptVariable(src)]) {
-        resolve();
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = src;
-      script.async = true;
-      script.onload = () => resolve();
-      script.onerror = () => reject();
-      document.head.appendChild(script);
-    });
+  private dataUrlToUint8Array(dataUrl: string): Uint8Array {
+    const base64 = dataUrl.split(',')[1] ?? '';
+    const binary = atob(base64);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i += 1) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
   }
 
-  /**
-   * Get the global variable name for a script
-   */
-  private getScriptVariable(src: string): string {
-    if (src.includes('html2canvas')) return 'html2canvas';
-    if (src.includes('jspdf')) return 'jsPDF';
-    return 'undefined';
+  private waitForNextFrame(): Promise<void> {
+    return new Promise((resolve) => requestAnimationFrame(() => resolve()));
   }
 }

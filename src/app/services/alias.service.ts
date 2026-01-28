@@ -21,11 +21,19 @@ export class AliasService {
   private loadAliases(): void {
     const stored = localStorage.getItem(this.storageKey);
     const legacy = localStorage.getItem(this.legacyStorageKey);
-    const aliases: Alias[] = stored
-      ? JSON.parse(stored)
-      : legacy
-        ? JSON.parse(legacy)
-        : [];
+    let parsed: any[] = [];
+    try {
+      parsed = stored
+        ? (JSON.parse(stored) as any[])
+        : legacy
+          ? (JSON.parse(legacy) as any[])
+          : [];
+    } catch (error) {
+      console.warn('Failed to parse saved aliases, starting fresh.', error);
+      parsed = [];
+    }
+
+    const aliases: Alias[] = this.normalizeAliases(parsed);
 
     aliases.forEach(al => {
       if (al.id >= AliasService.nextAliasId) {
@@ -39,6 +47,38 @@ export class AliasService {
     }
 
     this.aliasSubject.next(aliases);
+  }
+
+  private normalizeAliases(raw: any[]): Alias[] {
+    if (!Array.isArray(raw)) return [];
+
+    return raw
+      .map(item => {
+        const name = typeof item?.name === 'string' ? item.name : '';
+        const id = typeof item?.id === 'number' ? item.id : AliasService.nextAliasId++;
+        const createdAt = typeof item?.createdAt === 'number' ? item.createdAt : Date.now();
+        const type: 'text' | 'image' = item?.type === 'image' || item?.dataUrl ? 'image' : 'text';
+
+        if (type === 'image') {
+          return {
+            id,
+            type: 'image',
+            name,
+            dataUrl: typeof item?.dataUrl === 'string' ? item.dataUrl : '',
+            defaultSize: Number.isFinite(item?.defaultSize) ? Number(item.defaultSize) : 16,
+            createdAt
+          } as ImageAlias;
+        }
+
+        return {
+          id,
+          type: 'text',
+          name,
+          content: typeof item?.content === 'string' ? item.content : '',
+          createdAt
+        } as TextAlias;
+      })
+      .filter(al => !!al.name);
   }
 
   private saveAliases(): void {

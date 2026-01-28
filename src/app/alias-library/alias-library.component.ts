@@ -58,7 +58,12 @@ export class AliasLibraryComponent {
     reader.onload = (e: ProgressEvent<FileReader>) => {
       if (e.target?.result) {
         const dataUrl = e.target.result as string;
-        const name = file.name.replace(/\.[^/.]+$/, '');
+        const defaultName = file.name.replace(/\.[^/.]+$/, '');
+        const chosen = prompt('Enter a name for this image alias:', defaultName);
+        const name = (chosen ?? '').trim();
+        if (!name) {
+          return;
+        }
         const added = this.aliasService.addImageAlias(name, dataUrl, 16);
         if (!added) {
           alert('Alias name already exists. Please rename the file or choose a different name.');
