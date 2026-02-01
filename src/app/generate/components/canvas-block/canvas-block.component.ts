@@ -285,15 +285,20 @@ export class CanvasBlockComponent {
   }
 
   private toPlainCard(card: Card) {
-    return {
+    const payload: any = {
       id: card.id,
       name: card.name,
-      templateHtml: card.templateHtml,
       variables: card.variables,
       variableFontSizes: card.variableFontSizes,
       templateId: card.templateId,
       canvasId: card.canvasId,
       hash: card.hash
     };
+
+    if (!card.templateId) {
+      payload.templateHtml = card.templateHtml;
+    }
+
+    return payload;
   }
 }
