@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CanvasService } from '../../../../services/canvas.service';
 import { CardStorageService } from '../../../../services/card-storage.service';
@@ -8,7 +8,7 @@ import { Card } from '../../../../models/card.model';
 @Component({
   selector: 'app-card-properties',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, NgFor, NgIf, FormsModule],
   templateUrl: './card-properties.component.html',
   styleUrls: ['./card-properties.component.css']
 })

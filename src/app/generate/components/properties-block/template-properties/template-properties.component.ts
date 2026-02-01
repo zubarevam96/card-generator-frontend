@@ -17,7 +17,7 @@ declare var CodeMirror: any; // CodeMirror global
 export class TemplatePropertiesComponent implements AfterViewInit {
   templateName = '';
   selectedTemplate: Template | null = null;
-  selectedCanvasId: number = 1;
+  selectedCanvasId: string = '';
   private editor: any = null;
 
   constructor(

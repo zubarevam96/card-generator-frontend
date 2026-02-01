@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { CanvasService } from '../../../services/canvas.service';
 import { CardStorageService } from '../../../services/card-storage.service';
 import { Card } from '../../../models/card.model';
@@ -9,15 +9,15 @@ import { JsonModalComponent } from '../../../shared/json-modal/json-modal.compon
 @Component({
   selector: 'app-templates-block',
   standalone: true,
-  imports: [CommonModule, JsonModalComponent],
+  imports: [CommonModule, NgFor, NgIf, JsonModalComponent],
   templateUrl: './templates-block.component.html',
   styleUrls: ['./templates-block.component.css']  // Add if new
 })
 export class TemplatesBlockComponent {
   templates: Template[] = [];
   cards: Card[] = [];
-  expandedTemplates: Set<number> = new Set();  // For expand/collapse
-  selectedCanvasId: number = 1;
+  expandedTemplates: Set<string> = new Set();  // For expand/collapse
+  selectedCanvasId: string = '';
   showJsonModal = false;
   jsonModalTitle = '';
   jsonModalContent = '';
@@ -32,7 +32,7 @@ export class TemplatesBlockComponent {
     return this.templates.filter(t => t.canvasId === this.selectedCanvasId);
   }
 
-  toggleExpand(templateId: number) {
+  toggleExpand(templateId: string) {
     if (this.expandedTemplates.has(templateId)) {
       this.expandedTemplates.delete(templateId);
     } else {
@@ -40,11 +40,11 @@ export class TemplatesBlockComponent {
     }
   }
 
-  isExpanded(templateId: number): boolean {
+  isExpanded(templateId: string): boolean {
     return this.expandedTemplates.has(templateId);
   }
 
-  getLinkedCards(templateId: number): Card[] {
+  getLinkedCards(templateId: string): Card[] {
     return this.cards.filter(card => card.templateId === templateId);
   }
 
@@ -201,7 +201,8 @@ export class TemplatesBlockComponent {
       name: template.name,
       templateHtml: template.templateHtml,
       variables: template.variables,
-      canvasId: template.canvasId
+      canvasId: template.canvasId,
+      hash: template.hash
     };
   }
 
@@ -212,7 +213,8 @@ export class TemplatesBlockComponent {
       templateHtml: card.templateHtml,
       variables: card.variables,
       templateId: card.templateId,
-      canvasId: card.canvasId
+      canvasId: card.canvasId,
+      hash: card.hash
     };
   }
 }

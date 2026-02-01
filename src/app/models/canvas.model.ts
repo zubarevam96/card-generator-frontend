@@ -1,7 +1,7 @@
-let nextCanvasId = 1;
+import { generateGuid, hashString, stableStringify } from '../shared/id-utils';
 
 export class Canvas {
-    id: number;
+    id: string;
     name: string;
     cardWidth: number;
     cardHeight: number;
@@ -18,14 +18,9 @@ export class Canvas {
         canvasHeight: number = 842,
         distanceBetweenCards: number = 5,
         distanceFromBorders: number = 10,
-        id?: number
+        id?: string
     ) {
-        if (id) {
-            this.id = id;
-            if (id >= nextCanvasId) nextCanvasId = id + 1;
-        } else {
-            this.id = nextCanvasId++;
-        }
+        this.id = id ?? generateGuid();
         this.name = name;
         this.cardWidth = cardWidth;
         this.cardHeight = cardHeight;
@@ -33,5 +28,19 @@ export class Canvas {
         this.canvasHeight = canvasHeight;
         this.distanceBetweenCards = distanceBetweenCards;
         this.distanceFromBorders = distanceFromBorders;
+    }
+
+    get hash(): string {
+        return hashString(
+            stableStringify({
+                name: this.name,
+                cardWidth: this.cardWidth,
+                cardHeight: this.cardHeight,
+                canvasWidth: this.canvasWidth,
+                canvasHeight: this.canvasHeight,
+                distanceBetweenCards: this.distanceBetweenCards,
+                distanceFromBorders: this.distanceFromBorders
+            })
+        );
     }
 }

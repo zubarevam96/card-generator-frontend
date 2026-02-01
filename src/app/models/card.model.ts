@@ -1,35 +1,43 @@
-let nextCardId = 1;
+import { generateGuid, hashString, stableStringify } from '../shared/id-utils';
 
 export class Card {
-  id: number;
+  id: string;
   name: string;
   templateHtml: string;
   variables: { [key: string]: string };
   variableFontSizes: { [key: string]: number };
-  templateId: number; // Always required for cards - cards must be linked to a template
-  canvasId: number; // Canvas this card belongs to
+  templateId: string; // Always required for cards - cards must be linked to a template
+  canvasId: string; // Canvas this card belongs to
 
   constructor(
     name: string,
     templateHtml: string,
-    templateId: number,
-    id?: number,
+    templateId: string,
+    canvasId: string,
+    id?: string,
     variables: { [key: string]: string } = {},
-    canvasId: number = 1,
     variableFontSizes: { [key: string]: number } = {}
   ) {
-    if (id) {
-      this.id = id;
-      if (id >= nextCardId) nextCardId = id + 1; // keep counter in sync
-    } else {
-      this.id = nextCardId++;
-    }
+    this.id = id ?? generateGuid();
     this.name = name;
     this.templateHtml = templateHtml;
     this.templateId = templateId;
     this.canvasId = canvasId;
     this.variables = { ...variables }; // Create a new object to ensure proper reference
     this.variableFontSizes = { ...variableFontSizes };
+  }
+
+  get hash(): string {
+    return hashString(
+      stableStringify({
+        name: this.name,
+        templateHtml: this.templateHtml,
+        variables: this.variables,
+        variableFontSizes: this.variableFontSizes,
+        templateId: this.templateId,
+        canvasId: this.canvasId
+      })
+    );
   }
 
   get renderedHtml(): string {

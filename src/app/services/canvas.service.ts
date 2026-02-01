@@ -67,7 +67,7 @@ export class CanvasService {
   addCard(
     name: string,
     templateHtml: string,
-    templateId: number,
+    templateId: string,
     variables: { [key: string]: string } = {},
     variableFontSizes: { [key: string]: number } = {}
   ): Card {
@@ -76,7 +76,7 @@ export class CanvasService {
     return card;
   }
 
-  deleteCard(id: number) {
+  deleteCard(id: string) {
     this.cardStorageService.deleteCard(id);
     const current = this.cardsSubject.value.filter(c => c.id !== id);
     this.cardsSubject.next(current);
@@ -138,8 +138,17 @@ export class CanvasService {
   }
 
   updateCanvas(canvas: Canvas) {
-    const updated = { ...canvas };
-    const canvases = this.canvasesSubject.value.map(c => c.id === updated.id ? updated : c);
+    const updated = new Canvas(
+      canvas.name,
+      canvas.cardWidth,
+      canvas.cardHeight,
+      canvas.canvasWidth,
+      canvas.canvasHeight,
+      canvas.distanceBetweenCards,
+      canvas.distanceFromBorders,
+      canvas.id
+    );
+    const canvases = this.canvasesSubject.value.map(c => (c.id === updated.id ? updated : c));
     this.canvasesSubject.next(canvases);
     this.selectedCanvasSubject.next(updated);
     this.canvasSubject.next(updated);
@@ -257,9 +266,9 @@ export class CanvasService {
           card.name,
           newTemplateHtml,
           card.templateId,
+          card.canvasId,
           card.id,
           updatedVariables,
-          card.canvasId,
           updatedFontSizes
         );
         // Persist the updated card
@@ -316,7 +325,7 @@ export class CanvasService {
     this.canvasesSubject.next(canvases);
     this.cardStorageService.saveCanvases(canvases);
 
-    const templateIdMap: Record<number, number> = {};
+    const templateIdMap: Record<string, string> = {};
     const templates = Array.isArray(payload.templates) ? payload.templates : [];
 
     templates.forEach((t: any, index: number) => {
@@ -326,14 +335,14 @@ export class CanvasService {
       const newTemplate = this.cardStorageService.addTemplate(templateName, templateHtml, importedCanvas.id);
       newTemplate.variables = { ...templateVars };
       this.cardStorageService.updateTemplate(newTemplate);
-      const originalId = typeof t?.id === 'number' ? t.id : index;
-      templateIdMap[originalId] = newTemplate.id;
+      const originalId = t?.id ?? index;
+      templateIdMap[String(originalId)] = newTemplate.id;
     });
 
     const cards = Array.isArray(payload.cards) ? payload.cards : [];
     cards.forEach((c: any, index: number) => {
-      const templateKey = typeof c?.templateId === 'number' ? c.templateId : (typeof c?.templateIndex === 'number' ? c.templateIndex : -1);
-      const mappedTemplateId = templateIdMap[templateKey] ?? templateIdMap[index];
+      const templateKey = c?.templateId ?? (typeof c?.templateIndex === 'number' ? c.templateIndex : index);
+      const mappedTemplateId = templateIdMap[String(templateKey)];
       if (!mappedTemplateId) {
         return;
       }
@@ -351,7 +360,7 @@ export class CanvasService {
     return importedCanvas;
   }
 
-  deleteCanvas(canvasId: number) {
+  deleteCanvas(canvasId: string) {
     const canvases = this.canvasesSubject.value.filter(c => c.id !== canvasId);
     if (canvases.length === 0) {
       // Always keep at least one canvas
@@ -370,7 +379,7 @@ export class CanvasService {
     this.cardStorageService.deleteCardsByCanvas(canvasId);
   }
 
-  renameCanvas(canvasId: number, newName: string) {
+  renameCanvas(canvasId: string, newName: string) {
     const canvases = this.canvasesSubject.value.map(c => {
       if (c.id === canvasId) {
         c.name = newName;

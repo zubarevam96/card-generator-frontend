@@ -21,7 +21,7 @@ import { AliasService } from '../../../services/alias.service';
 })
 export class CanvasBlockComponent {
   cards: Card[] = [];
-  selectedCardId: number | null = null;
+  selectedCardId: string | null = null;
   canvas: Canvas = new Canvas();
   canvases: Canvas[] = [];
   selectedTemplate: Template | null = null;
@@ -168,7 +168,7 @@ export class CanvasBlockComponent {
     this.canvasService.addCanvas();
   }
 
-  deleteCanvas(canvasId: number) {
+  deleteCanvas(canvasId: string) {
     if (this.canvases.length <= 1) {
       alert('Cannot delete the only canvas');
       return;
@@ -178,7 +178,7 @@ export class CanvasBlockComponent {
     }
   }
 
-  renameCanvas(canvasId: number) {
+  renameCanvas(canvasId: string) {
     const canvas = this.canvases.find(c => c.id === canvasId);
     if (canvas) {
       const newName = prompt('Enter new name:', canvas.name);
@@ -267,7 +267,8 @@ export class CanvasBlockComponent {
       canvasWidth: canvas.canvasWidth,
       canvasHeight: canvas.canvasHeight,
       distanceBetweenCards: canvas.distanceBetweenCards,
-      distanceFromBorders: canvas.distanceFromBorders
+      distanceFromBorders: canvas.distanceFromBorders,
+      hash: canvas.hash
     };
   }
 
@@ -277,7 +278,8 @@ export class CanvasBlockComponent {
       name: template.name,
       templateHtml: template.templateHtml,
       variables: template.variables,
-      canvasId: template.canvasId
+      canvasId: template.canvasId,
+      hash: template.hash
     };
   }
 
@@ -289,7 +291,8 @@ export class CanvasBlockComponent {
       variables: card.variables,
       variableFontSizes: card.variableFontSizes,
       templateId: card.templateId,
-      canvasId: card.canvasId
+      canvasId: card.canvasId,
+      hash: card.hash
     };
   }
 }

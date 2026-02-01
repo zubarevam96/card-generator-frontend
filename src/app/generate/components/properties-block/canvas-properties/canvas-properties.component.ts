@@ -35,7 +35,19 @@ export class CanvasPropertiesComponent {
   largeCardHeight = Math.round(this.largeCardMm.h * MM_TO_PX);
 
   constructor(private canvasService: CanvasService) {
-    this.canvasService.canvas$.subscribe(c => (this.canvas = { ...c }));
+    this.canvasService.canvas$.subscribe(
+      c =>
+        (this.canvas = new Canvas(
+          c.name,
+          c.cardWidth,
+          c.cardHeight,
+          c.canvasWidth,
+          c.canvasHeight,
+          c.distanceBetweenCards,
+          c.distanceFromBorders,
+          c.id
+        ))
+    );
   }
 
   updateCanvas() {
