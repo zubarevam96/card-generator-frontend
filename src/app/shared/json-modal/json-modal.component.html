@@ -6,7 +6,6 @@
     </div>
     <div class="json-modal__body">
       <div #editorHost class="code-host"></div>
-      <pre class="fallback" *ngIf="!editorReady">{{ content }}</pre>
     </div>
     <div class="json-modal__actions">
       <button (click)="copyContent()">Copy JSON</button>

@@ -32,6 +32,9 @@
 .json-modal__body {
   padding: 12px 16px;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   overflow: auto;
   background: #fafafa;
 }
@@ -40,7 +43,21 @@
   border: 1px solid #ddd;
   border-radius: 6px;
   min-height: 260px;
-  max-height: 60vh;
+  max-height: none;
+  height: auto;
+  width: 100%;
+  overflow: visible;
+  flex: 1 1 auto;
+}
+
+.code-host .CodeMirror {
+  height: auto !important;
+  width: 100% !important;
+  overflow: visible !important;
+}
+
+.code-host .CodeMirror-scroll {
+  overflow: visible !important;
 }
 
 .fallback {
