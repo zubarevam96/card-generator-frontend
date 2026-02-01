@@ -5,6 +5,20 @@ import { Template } from '../models/template.model';
 import { Canvas } from '../models/canvas.model';
 import { CardStorageService } from './card-storage.service';
 
+type TemplateUpdateJob = {
+  token: number;
+  templateId: string;
+  newTemplateHtml: string;
+  newKeys: Set<string>;
+  removed: Set<string>;
+  renameMap: { [oldKey: string]: string };
+  newDefaults: { [key: string]: string };
+  cards: Card[];
+  index: number;
+  batchSize: number;
+  timerId?: number;
+};
+
 @Injectable({
   providedIn: 'root'
 })
@@ -31,6 +45,10 @@ export class CanvasService {
   selectedTemplate$ = this.selectedTemplateSubject.asObservable();
 
   private placeholderRegex = /{{\s*([\w-]+)\s*=\s*(?:"([^"]*)"|\d+)\s*}}/g;
+
+  private templateUpdateToken = 0;
+  private templateUpdateJobs = new Map<string, TemplateUpdateJob>();
+  private readonly templateUpdateBatchSize = 40;
 
   constructor(private cardStorageService: CardStorageService) {
     // Load canvases and cards from storage on initialization
@@ -173,7 +191,7 @@ export class CanvasService {
       template.templateHtml = html;
       this.cardStorageService.updateTemplate(template);
       const newKeys = this.getPlaceholderKeys(html);
-      this.updateCardsFromTemplate(template, oldKeys, newKeys);
+      this.scheduleTemplateCardUpdate(template, oldKeys, newKeys);
     }
   }
 
@@ -203,7 +221,22 @@ export class CanvasService {
     return keys;
   }
 
-  private updateCardsFromTemplate(template: Template, oldKeys: Set<string>, newKeys: Set<string>) {
+  async flushPendingTemplateUpdates(): Promise<void> {
+    const jobs = Array.from(this.templateUpdateJobs.values());
+    if (jobs.length === 0) return;
+
+    for (const job of jobs) {
+      this.finishTemplateUpdateJob(job);
+    }
+  }
+
+  private scheduleTemplateCardUpdate(template: Template, oldKeys: Set<string>, newKeys: Set<string>) {
+    const job = this.createTemplateUpdateJob(template, oldKeys, newKeys);
+    this.templateUpdateJobs.set(template.id, job);
+    this.processTemplateUpdateBatch(job);
+  }
+
+  private createTemplateUpdateJob(template: Template, oldKeys: Set<string>, newKeys: Set<string>): TemplateUpdateJob {
     const removed = new Set([...oldKeys].filter(k => !newKeys.has(k)));
     const added = new Set([...newKeys].filter(k => !oldKeys.has(k)));
 
@@ -214,7 +247,6 @@ export class CanvasService {
       renameMap[oldKey] = newKey;
     }
 
-    // Parse new defaults
     const newDefaults: { [key: string]: string } = {};
     let match;
     this.placeholderRegex.lastIndex = 0;
@@ -225,61 +257,99 @@ export class CanvasService {
     }
 
     const newTemplateHtml = template.templateHtml.replace(this.placeholderRegex, '{{$1}}');
+    const allCards = this.cardStorageService.getAllCards().filter(c => c.templateId === template.id);
 
-    // Get ALL cards from storage, not just the filtered ones for current canvas
-    const allCards = this.cardStorageService.getAllCards();
-    
-    // Update ALL cards that belong to this template (across all canvases)
-    allCards.forEach(card => {
-      if (card.templateId === template.id) {
-        const updatedVariables = { ...card.variables };
-        const updatedFontSizes = { ...card.variableFontSizes };
+    return {
+      token: ++this.templateUpdateToken,
+      templateId: template.id,
+      newTemplateHtml,
+      newKeys,
+      removed,
+      renameMap,
+      newDefaults,
+      cards: allCards,
+      index: 0,
+      batchSize: this.templateUpdateBatchSize
+    };
+  }
 
-        // Handle renames
-        for (const [oldKey, newKey] of Object.entries(renameMap)) {
-          if (updatedVariables[oldKey] !== undefined) {
-            updatedVariables[newKey] = updatedVariables[oldKey];
-            delete updatedVariables[oldKey];
-          }
-          if (updatedFontSizes[oldKey] !== undefined) {
-            updatedFontSizes[newKey] = updatedFontSizes[oldKey];
-            delete updatedFontSizes[oldKey];
-          }
-        }
+  private processTemplateUpdateBatch(job: TemplateUpdateJob) {
+    const currentJob = this.templateUpdateJobs.get(job.templateId);
+    if (!currentJob || currentJob.token !== job.token) return;
 
-        // Add new keys with defaults if not present
-        for (const key of newKeys) {
-          if (updatedVariables[key] === undefined) {
-            updatedVariables[key] = newDefaults[key];
-          }
-        }
+    const batch = job.cards.slice(job.index, job.index + job.batchSize);
+    if (batch.length === 0) {
+      this.finishTemplateUpdateJob(job);
+      return;
+    }
 
-        // Remove obsolete keys (if not renamed)
-        for (const key of removed) {
-          if (!renameMap[key]) {
-            delete updatedVariables[key];
-            delete updatedFontSizes[key];
-          }
-        }
+    const updatedCards = batch.map(card => this.buildUpdatedCardFromTemplate(card, job));
+    this.cardStorageService.updateCardsBatch(updatedCards, false);
+    job.index += batch.length;
 
-        const updatedCard = new Card(
-          card.name,
-          newTemplateHtml,
-          card.templateId,
-          card.canvasId,
-          card.id,
-          updatedVariables,
-          updatedFontSizes
-        );
-        // Persist the updated card
-        this.cardStorageService.updateCard(updatedCard);
+    if (job.index >= job.cards.length) {
+      this.finishTemplateUpdateJob(job);
+      return;
+    }
+
+    job.timerId = window.setTimeout(() => this.processTemplateUpdateBatch(job), 0);
+  }
+
+  private finishTemplateUpdateJob(job: TemplateUpdateJob) {
+    const currentJob = this.templateUpdateJobs.get(job.templateId);
+    if (!currentJob || currentJob.token !== job.token) return;
+
+    if (job.timerId !== undefined) {
+      clearTimeout(job.timerId);
+    }
+
+    if (job.index < job.cards.length) {
+      const remaining = job.cards.slice(job.index);
+      const updatedCards = remaining.map(card => this.buildUpdatedCardFromTemplate(card, job));
+      this.cardStorageService.updateCardsBatch(updatedCards, false);
+    }
+
+    this.cardStorageService.commitCardChanges();
+    this.templateUpdateJobs.delete(job.templateId);
+  }
+
+  private buildUpdatedCardFromTemplate(card: Card, job: TemplateUpdateJob): Card {
+    const updatedVariables = { ...card.variables };
+    const updatedFontSizes = { ...card.variableFontSizes };
+
+    for (const [oldKey, newKey] of Object.entries(job.renameMap)) {
+      if (updatedVariables[oldKey] !== undefined) {
+        updatedVariables[newKey] = updatedVariables[oldKey];
+        delete updatedVariables[oldKey];
       }
-    });
+      if (updatedFontSizes[oldKey] !== undefined) {
+        updatedFontSizes[newKey] = updatedFontSizes[oldKey];
+        delete updatedFontSizes[oldKey];
+      }
+    }
 
-    // Re-filter for current canvas to update cardsSubject
-    const currentCanvas = this.selectedCanvasSubject.value;
-    const filteredCards = this.cardStorageService.getAllCards().filter(c => c.canvasId === currentCanvas.id);
-    this.cardsSubject.next(filteredCards);
+    for (const key of job.newKeys) {
+      if (updatedVariables[key] === undefined) {
+        updatedVariables[key] = job.newDefaults[key];
+      }
+    }
+
+    for (const key of job.removed) {
+      if (!job.renameMap[key]) {
+        delete updatedVariables[key];
+        delete updatedFontSizes[key];
+      }
+    }
+
+    return new Card(
+      card.name,
+      job.newTemplateHtml,
+      card.templateId,
+      card.canvasId,
+      card.id,
+      updatedVariables,
+      updatedFontSizes
+    );
   }
 
   // Canvas management methods

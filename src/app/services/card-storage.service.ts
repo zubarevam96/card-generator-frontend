@@ -93,6 +93,40 @@ export class CardStorageService {
     this.saveCardsToStorage();
   }
 
+  updateCardsBatch(updatedCards: Card[], saveNow: boolean = true) {
+    if (updatedCards.length === 0) {
+      if (saveNow) {
+        this.saveCardsToStorage();
+      }
+      return;
+    }
+
+    const updatesById = new Map(updatedCards.map(card => [card.id, card] as const));
+    const current = this.cardsSubject.value.map(c => {
+      const updated = updatesById.get(c.id);
+      return updated
+        ? new Card(
+            updated.name,
+            updated.templateHtml,
+            updated.templateId,
+            updated.canvasId,
+            updated.id,
+            updated.variables,
+            updated.variableFontSizes
+          )
+        : c;
+    });
+
+    this.cardsSubject.next(current);
+    if (saveNow) {
+      this.saveCardsToStorage();
+    }
+  }
+
+  commitCardChanges() {
+    this.saveCardsToStorage();
+  }
+
   getTemplateById(id: string): Template | undefined {
     return this.templatesSubject.value.find(t => t.id === id);
   }

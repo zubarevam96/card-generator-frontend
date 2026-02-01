@@ -188,11 +188,12 @@ export class CanvasBlockComponent {
     }
   }
 
-  exportToPdf() {
+  async exportToPdf() {
     if (this.cards.length === 0) {
       alert('No cards to export');
       return;
     }
+    await this.canvasService.flushPendingTemplateUpdates();
     this.pdfExportService.exportCardsToPdf(this.cards, this.canvas, 'cards');
   }
 
