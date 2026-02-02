@@ -262,6 +262,7 @@ export class CanvasBlockComponent {
   private toPlainCanvas(canvas: Canvas) {
     return {
       id: canvas.id,
+      originalId: canvas.originalId,
       name: canvas.name,
       cardWidth: canvas.cardWidth,
       cardHeight: canvas.cardHeight,
@@ -276,6 +277,7 @@ export class CanvasBlockComponent {
   private toPlainTemplate(template: Template) {
     return {
       id: template.id,
+      originalId: template.originalId,
       name: template.name,
       templateHtml: template.templateHtml,
       variables: template.variables,
@@ -285,20 +287,18 @@ export class CanvasBlockComponent {
   }
 
   private toPlainCard(card: Card) {
-    const payload: any = {
+    const template = this.templates.find(t => t.id === card.templateId);
+    return {
       id: card.id,
+      originalId: card.originalId,
       name: card.name,
       variables: card.variables,
       variableFontSizes: card.variableFontSizes,
       templateId: card.templateId,
+      templateOriginalId: template?.originalId,
+      templateHash: card.templateHash,
       canvasId: card.canvasId,
       hash: card.hash
     };
-
-    if (!card.templateId) {
-      payload.templateHtml = card.templateHtml;
-    }
-
-    return payload;
   }
 }

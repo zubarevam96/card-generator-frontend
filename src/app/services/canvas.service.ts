@@ -170,7 +170,8 @@ export class CanvasService {
       canvas.distanceFromBorders,
       canvas.id,
       canvas.hashValue,
-      false
+      false,
+      canvas.originalId
     );
     const canvases = this.canvasesSubject.value.map(c => (c.id === updated.id ? updated : c));
     this.canvasesSubject.next(canvases);
@@ -359,7 +360,8 @@ export class CanvasService {
       updatedFontSizes,
       card.templateHash,
       card.hashValue,
-      false
+      false,
+      card.originalId
     );
   }
 
@@ -402,39 +404,74 @@ export class CanvasService {
       canvasData.canvasWidth ?? undefined,
       canvasData.canvasHeight ?? undefined,
       canvasData.distanceBetweenCards ?? undefined,
-      canvasData.distanceFromBorders ?? undefined
+      canvasData.distanceFromBorders ?? undefined,
+      undefined,
+      undefined,
+      false,
+      canvasData.originalId ?? canvasData.id
     );
 
     const canvases = [...this.canvasesSubject.value, importedCanvas];
     this.canvasesSubject.next(canvases);
     this.cardStorageService.saveCanvases(canvases);
 
-    const templateIdMap: Record<string, string> = {};
     const templates = Array.isArray(payload.templates) ? payload.templates : [];
+    const templateIdMap = new Map<string, Template>();
+    const templateOriginalIdMap = new Map<string, Template>();
 
     templates.forEach((t: any, index: number) => {
       const templateName = t?.name && t.name.trim().length > 0 ? t.name : `Imported Template ${index + 1}`;
       const templateHtml = t?.templateHtml ?? '';
       const templateVars = t?.variables ?? {};
-      const newTemplate = this.cardStorageService.addTemplate(templateName, templateHtml, importedCanvas.id);
+      const newTemplate = this.cardStorageService.addTemplate(
+        templateName,
+        templateHtml,
+        importedCanvas.id,
+        t?.originalId ?? t?.id
+      );
       newTemplate.variables = { ...templateVars };
       this.cardStorageService.updateTemplate(newTemplate);
-      const originalId = t?.id ?? index;
-      templateIdMap[String(originalId)] = newTemplate.id;
+      if (t?.id !== undefined && t?.id !== null) {
+        templateIdMap.set(String(t.id), newTemplate);
+      }
+      if (newTemplate.originalId) {
+        templateOriginalIdMap.set(String(newTemplate.originalId), newTemplate);
+      }
     });
 
     const cards = Array.isArray(payload.cards) ? payload.cards : [];
     cards.forEach((c: any, index: number) => {
-      const templateKey = c?.templateId ?? (typeof c?.templateIndex === 'number' ? c.templateIndex : index);
-      const mappedTemplateId = templateIdMap[String(templateKey)];
-      if (!mappedTemplateId) {
-        return;
-      }
       const cardName = c?.name && c.name.trim().length > 0 ? c.name : `Imported Card ${index + 1}`;
       const cardHtml = c?.templateHtml ?? '';
       const cardVars = c?.variables ?? {};
       const cardFontSizes = c?.variableFontSizes ?? {};
-      this.cardStorageService.addCard(cardName, cardHtml, mappedTemplateId, { ...cardVars }, importedCanvas.id, { ...cardFontSizes });
+
+      const templateIdKey = c?.templateId !== undefined && c?.templateId !== null ? String(c.templateId) : '';
+      const templateOriginalKey = c?.templateOriginalId ?? c?.templateId;
+      const mappedById = templateIdKey ? templateIdMap.get(templateIdKey) : undefined;
+      const mappedByOriginal = templateOriginalKey ? templateOriginalIdMap.get(String(templateOriginalKey)) : undefined;
+
+      const resolvedTemplate =
+        mappedById ??
+        mappedByOriginal ??
+        this.cardStorageService.resolveTemplateForImport({
+          templateId: c?.templateId,
+          templateOriginalId: c?.templateOriginalId ?? c?.templateId,
+          templateHash: c?.templateHash,
+          templateHtml: cardHtml,
+          templateName: c?.templateName,
+          canvasId: importedCanvas.id
+        });
+
+      this.cardStorageService.addCard(
+        cardName,
+        cardHtml,
+        resolvedTemplate.id,
+        { ...cardVars },
+        importedCanvas.id,
+        { ...cardFontSizes },
+        c?.originalId ?? c?.id
+      );
     });
 
     this.selectedCanvasSubject.next(importedCanvas);

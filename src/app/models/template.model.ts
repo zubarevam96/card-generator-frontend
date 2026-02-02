@@ -8,6 +8,7 @@ export class Template {
   canvasId: string; // Canvas this template belongs to
   hashValue: string;
   hashUpToDate: boolean;
+  originalId: string;
 
   constructor(
     name: string,
@@ -16,9 +17,11 @@ export class Template {
     id?: string,
     variables: { [key: string]: string } = {},
     hashValue?: string,
-    hashUpToDate: boolean = true
+    hashUpToDate: boolean = true,
+    originalId?: string
   ) {
     this.id = id ?? generateGuid();
+    this.originalId = originalId ?? this.id;
     this.name = name;
     this.templateHtml = templateHtml;
     this.canvasId = canvasId;

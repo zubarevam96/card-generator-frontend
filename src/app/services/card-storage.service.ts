@@ -35,9 +35,9 @@ export class CardStorageService {
   }
 
   // Add a new template
-  addTemplate(name: string, templateHtml: string, canvasId: string): Template {
+  addTemplate(name: string, templateHtml: string, canvasId: string, originalId?: string): Template {
     console.log('[CardStorageService] addTemplate called:', name);
-    const template = new Template(name, templateHtml, canvasId, undefined, {}, undefined, false);
+    const template = new Template(name, templateHtml, canvasId, undefined, {}, undefined, false, originalId);
     const current = this.templatesSubject.value;
     this.templatesSubject.next([...current, template]);
     this.saveTemplatesToStorage();
@@ -51,10 +51,23 @@ export class CardStorageService {
     templateId: string,
     variables: { [key: string]: string } = {},
     canvasId: string = this.canvasesSubject.value[0]?.id ?? generateGuid(),
-    variableFontSizes: { [key: string]: number } = {}
+    variableFontSizes: { [key: string]: number } = {},
+    originalId?: string
   ): Card {
     console.log('[CardStorageService] addCard called:', name, 'templateId:', templateId, 'canvasId:', canvasId);
-    const card = new Card(name, templateHtml, templateId, canvasId, undefined, variables, variableFontSizes, undefined, undefined, false);
+    const card = new Card(
+      name,
+      templateHtml,
+      templateId,
+      canvasId,
+      undefined,
+      variables,
+      variableFontSizes,
+      undefined,
+      undefined,
+      false,
+      originalId
+    );
     const current = this.cardsSubject.value;
     this.cardsSubject.next([...current, card]);
     this.saveCardsToStorage();
@@ -83,7 +96,8 @@ export class CardStorageService {
             updatedTemplate.id,
             updatedTemplate.variables,
             updatedTemplate.hashValue,
-            updatedTemplate.hashUpToDate
+            updatedTemplate.hashUpToDate,
+            updatedTemplate.originalId
           )
         : t
     );
@@ -104,7 +118,8 @@ export class CardStorageService {
             updatedCard.variableFontSizes,
             updatedCard.templateHash,
             updatedCard.hashValue,
-            updatedCard.hashUpToDate
+            updatedCard.hashUpToDate,
+            updatedCard.originalId
           )
         : c
     );
@@ -134,7 +149,8 @@ export class CardStorageService {
             updated.variableFontSizes,
             updated.templateHash,
             updated.hashValue,
-            updated.hashUpToDate
+            updated.hashUpToDate,
+            updated.originalId
           )
         : c;
     });
@@ -161,8 +177,82 @@ export class CardStorageService {
     return this.templatesSubject.value;
   }
 
+  getAllTemplates(): Template[] {
+    return this.templatesSubject.value;
+  }
+
   getAllCards(): Card[] {
     return this.cardsSubject.value;
+  }
+
+  resolveTemplateForImport(options: {
+    templateId?: string;
+    templateOriginalId?: string;
+    templateHash?: string;
+    templateHtml?: string;
+    templateName?: string;
+    templateVariables?: { [key: string]: string };
+    canvasId: string;
+  }): Template {
+    const templates = this.templatesSubject.value;
+    const { templateId, templateOriginalId, templateHash, templateHtml, templateName, templateVariables, canvasId } = options;
+    let candidate: Template | undefined;
+
+    if (templateId) {
+      const direct = templates.find(t => t.id === templateId);
+      if (direct) {
+        return direct.canvasId === canvasId ? direct : this.cloneTemplateForCanvas(direct, canvasId);
+      }
+    }
+
+    const originalId = templateOriginalId ?? templateId;
+    if (originalId) {
+      const byOriginalInCanvas = templates.find(t => t.originalId === originalId && t.canvasId === canvasId);
+      if (byOriginalInCanvas) {
+        return byOriginalInCanvas;
+      }
+      candidate = templates.find(t => t.originalId === originalId) ?? candidate;
+    }
+
+    if (templateHash) {
+      const byHashInCanvas = templates.find(
+        t => t.hashUpToDate && t.hash === templateHash && t.canvasId === canvasId
+      );
+      if (byHashInCanvas) {
+        return byHashInCanvas;
+      }
+      candidate = templates.find(t => t.hashUpToDate && t.hash === templateHash) ?? candidate;
+    }
+
+    if (candidate) {
+      return candidate.canvasId === canvasId ? candidate : this.cloneTemplateForCanvas(candidate, canvasId);
+    }
+
+    const name = templateName && templateName.trim().length > 0 ? templateName : 'Imported Template';
+    const html = templateHtml ?? '';
+    const created = this.addTemplate(name, html, canvasId, originalId);
+    if (templateVariables) {
+      created.variables = { ...templateVariables };
+      this.updateTemplate(created);
+    }
+    return created;
+  }
+
+  private cloneTemplateForCanvas(template: Template, canvasId: string): Template {
+    const cloned = new Template(
+      template.name,
+      template.templateHtml,
+      canvasId,
+      undefined,
+      template.variables,
+      undefined,
+      false,
+      template.originalId
+    );
+    const current = this.templatesSubject.value;
+    this.templatesSubject.next([...current, cloned]);
+    this.saveTemplatesToStorage();
+    return cloned;
   }
 
   clearAllStorage() {
@@ -177,6 +267,76 @@ export class CardStorageService {
     console.log('Cards:', this.cardsSubject.value);
     console.log('localStorage.savedTemplates:', localStorage.getItem('savedTemplates'));
     console.log('localStorage.savedCards:', localStorage.getItem('savedCards'));
+  }
+
+  private startHashDaemon() {
+    if (this.hashDaemonTimer !== null) return;
+    this.hashDaemonTimer = window.setInterval(() => this.processHashDaemonTick(), this.hashDaemonIntervalMs);
+  }
+
+  private processHashDaemonTick() {
+    let remaining = this.hashDaemonBatchSize;
+    if (remaining <= 0) return;
+
+    const canvases = [...this.canvasesSubject.value];
+    const templates = [...this.templatesSubject.value];
+    const cards = [...this.cardsSubject.value];
+
+    let canvasesChanged = false;
+    let templatesChanged = false;
+    let cardsChanged = false;
+
+    for (const canvas of canvases) {
+      if (remaining <= 0) break;
+      if (!canvas.hashUpToDate) {
+        canvas.refreshHash();
+        canvasesChanged = true;
+        remaining -= 1;
+      }
+    }
+
+    const templateMap = new Map(templates.map(t => [t.id, t] as const));
+
+    for (const template of templates) {
+      if (remaining <= 0) break;
+      if (!template.hashUpToDate) {
+        template.refreshHash();
+        templatesChanged = true;
+        remaining -= 1;
+      }
+    }
+
+    for (const card of cards) {
+      if (remaining <= 0) break;
+
+      const template = card.templateId ? templateMap.get(card.templateId) : undefined;
+      const templateHash = template?.hash;
+      if (templateHash && card.templateHash !== templateHash) {
+        card.templateHash = templateHash;
+        card.markHashOutdated();
+        cardsChanged = true;
+      }
+
+      if (!card.hashUpToDate) {
+        card.refreshHash();
+        cardsChanged = true;
+        remaining -= 1;
+      }
+    }
+
+    if (canvasesChanged) {
+      this.saveCanvases(canvases);
+    }
+
+    if (templatesChanged) {
+      this.templatesSubject.next([...templates]);
+      this.saveTemplatesToStorage();
+    }
+
+    if (cardsChanged) {
+      this.cardsSubject.next([...cards]);
+      this.saveCardsToStorage();
+    }
   }
 
   private migrateOldData() {
@@ -274,7 +434,12 @@ export class CardStorageService {
           }
           changed = true;
         }
-        return { ...c, id };
+        let originalId = c.originalId;
+        if (!originalId || typeof originalId !== 'string') {
+          originalId = id;
+          changed = true;
+        }
+        return { ...c, id, originalId };
       });
     }
 
@@ -302,8 +467,13 @@ export class CardStorageService {
         }
         changed = true;
       }
+      let originalId = t.originalId;
+      if (!originalId || typeof originalId !== 'string') {
+        originalId = id;
+        changed = true;
+      }
 
-      return { ...t, id, canvasId };
+      return { ...t, id, canvasId, originalId };
     });
 
     cards = cards.map((c: any) => {
@@ -332,8 +502,13 @@ export class CardStorageService {
         }
         changed = true;
       }
+      let originalId = c.originalId;
+      if (!originalId || typeof originalId !== 'string') {
+        originalId = id;
+        changed = true;
+      }
 
-      return { ...c, id, templateId, canvasId };
+      return { ...c, id, templateId, canvasId, originalId };
     });
 
     if (changed) {
@@ -352,7 +527,19 @@ export class CardStorageService {
     if (stored) {
       const parsed = JSON.parse(stored);
       console.log('[LoadTemplates] Loaded templates count:', parsed.length);
-      return parsed.map((t: any) => new Template(t.name, t.templateHtml, t.canvasId, t.id, t.variables || {}));
+      return parsed.map(
+        (t: any) =>
+          new Template(
+            t.name,
+            t.templateHtml,
+            t.canvasId,
+            t.id,
+            t.variables || {},
+            t.hashValue,
+            t.hashUpToDate,
+            t.originalId
+          )
+      );
     }
     return [];
   }
@@ -366,16 +553,21 @@ export class CardStorageService {
     if (stored) {
       const parsed = JSON.parse(stored);
       console.log('[LoadCards] Loaded cards count:', parsed.length);
-      return parsed.map((c: any) =>
-        new Card(
-          c.name,
-          c.templateHtml,
-          c.templateId,
-          c.canvasId,
-          c.id,
-          c.variables || {},
-          c.variableFontSizes || {}
-        )
+      return parsed.map(
+        (c: any) =>
+          new Card(
+            c.name,
+            c.templateHtml,
+            c.templateId,
+            c.canvasId,
+            c.id,
+            c.variables || {},
+            c.variableFontSizes || {},
+            c.templateHash,
+            c.hashValue,
+            c.hashUpToDate,
+            c.originalId
+          )
       );
     }
     return [];
@@ -397,7 +589,22 @@ export class CardStorageService {
     const stored = localStorage.getItem('savedCanvases');
     if (stored) {
       const parsed = JSON.parse(stored);
-      return parsed.map((c: any) => new Canvas(c.name, c.cardWidth, c.cardHeight, c.canvasWidth, c.canvasHeight, c.distanceBetweenCards, c.distanceFromBorders ?? 10, c.id));
+      return parsed.map(
+        (c: any) =>
+          new Canvas(
+            c.name,
+            c.cardWidth,
+            c.cardHeight,
+            c.canvasWidth,
+            c.canvasHeight,
+            c.distanceBetweenCards,
+            c.distanceFromBorders ?? 10,
+            c.id,
+            c.hashValue,
+            c.hashUpToDate,
+            c.originalId
+          )
+      );
     }
     // Return default canvas if none exist
     return [new Canvas('Canvas 1')];

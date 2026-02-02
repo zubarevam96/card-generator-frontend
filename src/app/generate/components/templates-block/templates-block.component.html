@@ -2,7 +2,7 @@
     <h3>Templates</h3>
     <div class="actions-row">
         <button class="small-btn" (click)="newTemplate()">New template</button>
-        <button class="small-btn" (click)="templateImportInput.click()">Import template</button>
+        <button class="small-btn" (click)="templateImportInput.click()">Import</button>
         <input #templateImportInput type="file" accept="application/json,.json" (change)="onTemplateImportChange($event)" hidden>
         <button class="small-btn" (click)="importTemplateFromText()">Paste JSON</button>
     </div>
@@ -20,6 +20,7 @@
         <div *ngIf="isExpanded(template.id)" class="tree-children">
             <div *ngFor="let card of getLinkedCards(template.id)" class="tree-node child-node">
                 <strong class="clickable" (click)="selectCard(card)">{{ card.name || 'undefined' }}</strong>
+                <button class="small-btn" (click)="exportCard(card)">Export card</button>
                 <button class="small-btn" (click)="duplicateCard(card)">Duplicate</button>
                 <button class="small-btn" (click)="removeCard(card)">Remove</button>
             </div>
@@ -32,6 +33,7 @@
         <h3>Unlinked Cards</h3>
         <div *ngFor="let card of getUnlinkedCards()">
             <strong class="clickable" (click)="selectCard(card)">{{ card.name || 'undefined' }}</strong>
+            <button class="small-btn" (click)="exportCard(card)">Export card</button>
             <button class="small-btn" (click)="duplicateCard(card)">Duplicate</button>
             <button class="small-btn" (click)="removeCard(card)">Remove</button>
             <button class="small-btn" (click)="saveCardAsTemplate(card)">Save as Template</button>

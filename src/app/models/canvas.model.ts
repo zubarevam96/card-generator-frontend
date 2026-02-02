@@ -11,6 +11,7 @@ export class Canvas {
     distanceFromBorders: number;
     hashValue: string;
     hashUpToDate: boolean;
+    originalId: string;
 
     constructor(
         name: string = 'Canvas',
@@ -22,9 +23,11 @@ export class Canvas {
         distanceFromBorders: number = 10,
         id?: string,
         hashValue?: string,
-        hashUpToDate: boolean = true
+        hashUpToDate: boolean = true,
+        originalId?: string
     ) {
         this.id = id ?? generateGuid();
+        this.originalId = originalId ?? this.id;
         this.name = name;
         this.cardWidth = cardWidth;
         this.cardHeight = cardHeight;

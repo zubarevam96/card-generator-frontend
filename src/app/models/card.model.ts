@@ -11,6 +11,7 @@ export class Card {
   hashValue: string;
   hashUpToDate: boolean;
   templateHash?: string;
+  originalId: string;
 
   constructor(
     name: string,
@@ -22,9 +23,11 @@ export class Card {
     variableFontSizes: { [key: string]: number } = {},
     templateHash?: string,
     hashValue?: string,
-    hashUpToDate: boolean = true
+    hashUpToDate: boolean = true,
+    originalId?: string
   ) {
     this.id = id ?? generateGuid();
+    this.originalId = originalId ?? this.id;
     this.name = name;
     this.templateHtml = templateHtml;
     this.templateId = templateId;

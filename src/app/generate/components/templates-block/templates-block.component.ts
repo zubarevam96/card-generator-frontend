@@ -127,9 +127,20 @@ export class TemplatesBlockComponent {
       type: 'template',
       version: 1,
       template: this.toPlainTemplate(template),
-      cards: linkedCards.map(card => this.toPlainCard(card))
+      cards: linkedCards.map(card => this.toPlainCard(card, false))
     };
     this.openJsonModal(`Export template: ${template.name || 'undefined'}`, JSON.stringify(payload, null, 2));
+  }
+
+  exportCard(card: Card) {
+    const template = this.cardStorageService.getTemplateById(card.templateId);
+    const payload = {
+      type: 'card',
+      version: 1,
+      template: template ? this.toPlainTemplate(template) : undefined,
+      card: this.toPlainCard(card, true)
+    };
+    this.openJsonModal(`Export card: ${card.name || 'undefined'}`, JSON.stringify(payload, null, 2));
   }
 
   onTemplateImportChange(event: Event) {
@@ -169,24 +180,162 @@ export class TemplatesBlockComponent {
   private importTemplatePayload(payload: any) {
     if (!payload) return;
 
+    if (payload.type === 'card' && payload.card) {
+      this.importCardPayload(payload);
+      return;
+    }
+
     const templateData = payload.template ?? payload;
     const targetCanvasId = this.selectedCanvasId;
     const templateName = templateData.name && templateData.name.trim().length > 0 ? templateData.name : 'Imported Template';
     const templateHtml = templateData.templateHtml ?? '';
     const templateVariables = templateData.variables ?? {};
 
-    const newTemplate = this.cardStorageService.addTemplate(templateName, templateHtml, targetCanvasId);
-    // Persist any default variables carried on template
-    newTemplate.variables = { ...templateVariables };
-    this.cardStorageService.updateTemplate(newTemplate);
+    const resolvedTemplate = this.cardStorageService.resolveTemplateForImport({
+      templateId: templateData?.id,
+      templateOriginalId: templateData?.originalId ?? templateData?.id,
+      templateHash: templateData?.hash,
+      templateHtml,
+      templateName,
+      templateVariables,
+      canvasId: targetCanvasId
+    });
+
+    const templateCache = new Map<string, Template>();
+    this.cacheTemplateMatch(templateCache, resolvedTemplate);
 
     const cards = Array.isArray(payload.cards) ? payload.cards : [];
     cards.forEach((card: any, index: number) => {
       const cardName = card?.name && card.name.trim().length > 0 ? card.name : `Imported Card ${index + 1}`;
       const cardHtml = card?.templateHtml ?? templateHtml;
       const cardVars = card?.variables ?? {};
-      this.cardStorageService.addCard(cardName, cardHtml, newTemplate.id, { ...cardVars }, targetCanvasId);
+      const cardFontSizes = card?.variableFontSizes ?? {};
+      const matchedTemplate = this.resolveTemplateForCard(
+        card,
+        resolvedTemplate,
+        targetCanvasId,
+        cardHtml,
+        templateCache
+      );
+
+      this.cardStorageService.addCard(
+        cardName,
+        cardHtml,
+        matchedTemplate.id,
+        { ...cardVars },
+        targetCanvasId,
+        { ...cardFontSizes },
+        card?.originalId ?? card?.id
+      );
     });
+  }
+
+  private importCardPayload(payload: any) {
+    const card = payload.card;
+    if (!card) return;
+
+    const templateData = payload.template ?? {};
+    const targetCanvasId = this.selectedCanvasId;
+
+    const resolvedTemplate =
+      this.findExistingTemplateForCard(card, templateData, targetCanvasId) ??
+      this.cardStorageService.resolveTemplateForImport({
+        templateId: card?.templateId ?? templateData?.id,
+        templateOriginalId: card?.templateOriginalId ?? templateData?.originalId ?? card?.templateId,
+        templateHash: card?.templateHash ?? templateData?.hash,
+        templateHtml: card?.templateHtml ?? templateData?.templateHtml ?? '',
+        templateName: templateData?.name,
+        templateVariables: templateData?.variables,
+        canvasId: targetCanvasId
+      });
+
+    const cardName = card?.name && card.name.trim().length > 0 ? card.name : 'Imported Card';
+    const cardHtml = card?.templateHtml ?? resolvedTemplate.templateHtml;
+    const cardVars = card?.variables ?? {};
+    const cardFontSizes = card?.variableFontSizes ?? {};
+
+    this.cardStorageService.addCard(
+      cardName,
+      cardHtml,
+      resolvedTemplate.id,
+      { ...cardVars },
+      targetCanvasId,
+      { ...cardFontSizes },
+      card?.originalId ?? card?.id
+    );
+  }
+
+  private resolveTemplateForCard(
+    card: any,
+    fallbackTemplate: Template,
+    canvasId: string,
+    templateHtml: string,
+    cache: Map<string, Template>
+  ): Template {
+    const templateId = card?.templateId ?? fallbackTemplate.id;
+    const templateOriginalId = card?.templateOriginalId ?? card?.templateId ?? fallbackTemplate.originalId;
+    const templateHash = card?.templateHash ?? fallbackTemplate.hash;
+
+    if (templateId) {
+      const cachedById = cache.get(`id:${templateId}|${canvasId}`);
+      if (cachedById) return cachedById;
+    }
+
+    if (templateOriginalId) {
+      const cachedByOriginal = cache.get(`orig:${templateOriginalId}|${canvasId}`);
+      if (cachedByOriginal) return cachedByOriginal;
+    }
+
+    if (templateHash) {
+      const cachedByHash = cache.get(`hash:${templateHash}|${canvasId}`);
+      if (cachedByHash) return cachedByHash;
+    }
+
+    const resolved = this.cardStorageService.resolveTemplateForImport({
+      templateId,
+      templateOriginalId,
+      templateHash,
+      templateHtml,
+      templateName: card?.templateName ?? fallbackTemplate.name,
+      canvasId
+    });
+
+    this.cacheTemplateMatch(cache, resolved);
+    return resolved;
+  }
+
+  private findExistingTemplateForCard(card: any, templateData: any, canvasId: string): Template | null {
+    const templates = this.cardStorageService.getAllTemplates().filter(t => t.canvasId === canvasId);
+    const templateId = card?.templateId ?? templateData?.id;
+    const templateOriginalId = card?.templateOriginalId ?? templateData?.originalId ?? card?.templateId;
+    const templateHash = card?.templateHash ?? templateData?.hash;
+
+    if (templateId) {
+      const byId = templates.find(t => t.id === templateId);
+      if (byId) return byId;
+    }
+
+    if (templateOriginalId) {
+      const byOriginal = templates.find(t => t.originalId === templateOriginalId);
+      if (byOriginal) return byOriginal;
+    }
+
+    if (templateHash) {
+      const byHash = templates.find(t => t.hashUpToDate && t.hash === templateHash);
+      if (byHash) return byHash;
+    }
+
+    return null;
+  }
+
+  private cacheTemplateMatch(cache: Map<string, Template>, template: Template) {
+    cache.set(`id:${template.id}|${template.canvasId}`, template);
+    if (template.originalId) {
+      cache.set(`orig:${template.originalId}|${template.canvasId}`, template);
+    }
+    if (template.hashUpToDate) {
+      cache.set(`hash:${template.hash}|${template.canvasId}`, template);
+    }
   }
 
   private openJsonModal(title: string, content: string) {
@@ -198,6 +347,7 @@ export class TemplatesBlockComponent {
   private toPlainTemplate(template: Template) {
     return {
       id: template.id,
+      originalId: template.originalId,
       name: template.name,
       templateHtml: template.templateHtml,
       variables: template.variables,
@@ -206,15 +356,25 @@ export class TemplatesBlockComponent {
     };
   }
 
-  private toPlainCard(card: Card) {
-    return {
+  private toPlainCard(card: Card, includeTemplateHtml: boolean) {
+    const template = this.cardStorageService.getTemplateById(card.templateId);
+    const payload: any = {
       id: card.id,
+      originalId: card.originalId,
       name: card.name,
-      templateHtml: card.templateHtml,
       variables: card.variables,
+      variableFontSizes: card.variableFontSizes,
       templateId: card.templateId,
+      templateOriginalId: template?.originalId,
+      templateHash: card.templateHash,
       canvasId: card.canvasId,
       hash: card.hash
     };
+
+    if (includeTemplateHtml) {
+      payload.templateHtml = template?.templateHtml ?? card.templateHtml;
+    }
+
+    return payload;
   }
 }
