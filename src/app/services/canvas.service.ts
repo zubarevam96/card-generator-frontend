@@ -113,6 +113,7 @@ export class CanvasService {
     const selected = this.selectedCardSubject.value;
     if (selected) {
       selected.templateHtml = html;
+      selected.markHashOutdated();
       this.cardsSubject.next([...this.cardsSubject.value]);
       this.cardStorageService.updateCard(selected);
     }
@@ -122,6 +123,7 @@ export class CanvasService {
     const selected = this.selectedCardSubject.value;
     if (selected) {
       selected.variables[key] = value;
+      selected.markHashOutdated();
       this.cardsSubject.next([...this.cardsSubject.value]);
       this.cardStorageService.updateCard(selected);
     }
@@ -135,6 +137,7 @@ export class CanvasService {
       } else {
         selected.variableFontSizes[key] = size;
       }
+      selected.markHashOutdated();
       this.cardsSubject.next([...this.cardsSubject.value]);
       this.cardStorageService.updateCard(selected);
     }
@@ -144,6 +147,7 @@ export class CanvasService {
     const selected = this.selectedCardSubject.value;
     if (selected) {
       selected.name = name;
+      selected.markHashOutdated();
       this.cardsSubject.next([...this.cardsSubject.value]);
       this.cardStorageService.updateCard(selected);
     }
@@ -164,7 +168,9 @@ export class CanvasService {
       canvas.canvasHeight,
       canvas.distanceBetweenCards,
       canvas.distanceFromBorders,
-      canvas.id
+      canvas.id,
+      canvas.hashValue,
+      false
     );
     const canvases = this.canvasesSubject.value.map(c => (c.id === updated.id ? updated : c));
     this.canvasesSubject.next(canvases);
@@ -189,6 +195,7 @@ export class CanvasService {
       const oldHtml = template.templateHtml;
       const oldKeys = this.getPlaceholderKeys(oldHtml);
       template.templateHtml = html;
+      template.markHashOutdated();
       this.cardStorageService.updateTemplate(template);
       const newKeys = this.getPlaceholderKeys(html);
       this.scheduleTemplateCardUpdate(template, oldKeys, newKeys);
@@ -199,6 +206,7 @@ export class CanvasService {
     const template = this.selectedTemplateSubject.value;
     if (template) {
       template.name = name;
+      template.markHashOutdated();
       this.cardStorageService.updateTemplate(template);
     }
   }
@@ -348,7 +356,10 @@ export class CanvasService {
       card.canvasId,
       card.id,
       updatedVariables,
-      updatedFontSizes
+      updatedFontSizes,
+      card.templateHash,
+      card.hashValue,
+      false
     );
   }
 
@@ -369,7 +380,10 @@ export class CanvasService {
       config?.canvasWidth ?? undefined,
       config?.canvasHeight ?? undefined,
       config?.distanceBetweenCards ?? undefined,
-      config?.distanceFromBorders ?? undefined
+      config?.distanceFromBorders ?? undefined,
+      undefined,
+      undefined,
+      false
     );
     const canvases = [...this.canvasesSubject.value, newCanvas];
     this.canvasesSubject.next(canvases);
@@ -453,6 +467,7 @@ export class CanvasService {
     const canvases = this.canvasesSubject.value.map(c => {
       if (c.id === canvasId) {
         c.name = newName;
+        c.markHashOutdated();
       }
       return c;
     });

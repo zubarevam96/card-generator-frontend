@@ -11,6 +11,10 @@ import { generateGuid } from '../shared/id-utils';
 export class CardStorageService {
   private migrationDone = false;
   private guidNormalizationDone = false;
+
+  private hashDaemonTimer: number | null = null;
+  private readonly hashDaemonIntervalMs = 250;
+  private readonly hashDaemonBatchSize = 40;
   
   private canvasesSubject = new BehaviorSubject<Canvas[]>(this.loadCanvasesFromStorage());
   canvases$ = this.canvasesSubject.asObservable();
@@ -21,6 +25,10 @@ export class CardStorageService {
   private cardsSubject = new BehaviorSubject<Card[]>(this.loadCardsFromStorage());
   cards$ = this.cardsSubject.asObservable();
 
+  constructor() {
+    this.startHashDaemon();
+  }
+
   // For backward compatibility
   get savedCards$() {
     return this.templates$;
@@ -29,7 +37,7 @@ export class CardStorageService {
   // Add a new template
   addTemplate(name: string, templateHtml: string, canvasId: string): Template {
     console.log('[CardStorageService] addTemplate called:', name);
-    const template = new Template(name, templateHtml, canvasId);
+    const template = new Template(name, templateHtml, canvasId, undefined, {}, undefined, false);
     const current = this.templatesSubject.value;
     this.templatesSubject.next([...current, template]);
     this.saveTemplatesToStorage();
@@ -46,7 +54,7 @@ export class CardStorageService {
     variableFontSizes: { [key: string]: number } = {}
   ): Card {
     console.log('[CardStorageService] addCard called:', name, 'templateId:', templateId, 'canvasId:', canvasId);
-    const card = new Card(name, templateHtml, templateId, canvasId, undefined, variables, variableFontSizes);
+    const card = new Card(name, templateHtml, templateId, canvasId, undefined, variables, variableFontSizes, undefined, undefined, false);
     const current = this.cardsSubject.value;
     this.cardsSubject.next([...current, card]);
     this.saveCardsToStorage();
@@ -68,7 +76,15 @@ export class CardStorageService {
   updateTemplate(updatedTemplate: Template) {
     const current = this.templatesSubject.value.map(t =>
       t.id === updatedTemplate.id
-        ? new Template(updatedTemplate.name, updatedTemplate.templateHtml, updatedTemplate.canvasId, updatedTemplate.id, updatedTemplate.variables)
+        ? new Template(
+            updatedTemplate.name,
+            updatedTemplate.templateHtml,
+            updatedTemplate.canvasId,
+            updatedTemplate.id,
+            updatedTemplate.variables,
+            updatedTemplate.hashValue,
+            updatedTemplate.hashUpToDate
+          )
         : t
     );
     this.templatesSubject.next(current);
@@ -85,7 +101,10 @@ export class CardStorageService {
             updatedCard.canvasId,
             updatedCard.id,
             updatedCard.variables,
-            updatedCard.variableFontSizes
+            updatedCard.variableFontSizes,
+            updatedCard.templateHash,
+            updatedCard.hashValue,
+            updatedCard.hashUpToDate
           )
         : c
     );
@@ -112,7 +131,10 @@ export class CardStorageService {
             updated.canvasId,
             updated.id,
             updated.variables,
-            updated.variableFontSizes
+            updated.variableFontSizes,
+            updated.templateHash,
+            updated.hashValue,
+            updated.hashUpToDate
           )
         : c;
     });

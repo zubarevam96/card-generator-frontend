@@ -8,6 +8,9 @@ export class Card {
   variableFontSizes: { [key: string]: number };
   templateId: string; // Always required for cards - cards must be linked to a template
   canvasId: string; // Canvas this card belongs to
+  hashValue: string;
+  hashUpToDate: boolean;
+  templateHash?: string;
 
   constructor(
     name: string,
@@ -16,7 +19,10 @@ export class Card {
     canvasId: string,
     id?: string,
     variables: { [key: string]: string } = {},
-    variableFontSizes: { [key: string]: number } = {}
+    variableFontSizes: { [key: string]: number } = {},
+    templateHash?: string,
+    hashValue?: string,
+    hashUpToDate: boolean = true
   ) {
     this.id = id ?? generateGuid();
     this.name = name;
@@ -25,9 +31,30 @@ export class Card {
     this.canvasId = canvasId;
     this.variables = { ...variables }; // Create a new object to ensure proper reference
     this.variableFontSizes = { ...variableFontSizes };
+    this.templateHash = templateHash;
+    if (hashUpToDate) {
+      this.hashValue = hashValue ?? this.computeHash();
+      this.hashUpToDate = true;
+    } else {
+      this.hashValue = hashValue ?? '';
+      this.hashUpToDate = false;
+    }
   }
 
   get hash(): string {
+    return this.hashValue;
+  }
+
+  refreshHash() {
+    this.hashValue = this.computeHash();
+    this.hashUpToDate = true;
+  }
+
+  markHashOutdated() {
+    this.hashUpToDate = false;
+  }
+
+  private computeHash(): string {
     return hashString(
       stableStringify({
         name: this.name,
@@ -35,7 +62,8 @@ export class Card {
         variables: this.variables,
         variableFontSizes: this.variableFontSizes,
         templateId: this.templateId,
-        canvasId: this.canvasId
+        canvasId: this.canvasId,
+        templateHash: this.templateHash
       })
     );
   }

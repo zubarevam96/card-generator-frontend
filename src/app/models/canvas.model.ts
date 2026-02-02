@@ -9,6 +9,8 @@ export class Canvas {
     canvasHeight: number;
     distanceBetweenCards: number
     distanceFromBorders: number;
+    hashValue: string;
+    hashUpToDate: boolean;
 
     constructor(
         name: string = 'Canvas',
@@ -18,7 +20,9 @@ export class Canvas {
         canvasHeight: number = 842,
         distanceBetweenCards: number = 5,
         distanceFromBorders: number = 10,
-        id?: string
+        id?: string,
+        hashValue?: string,
+        hashUpToDate: boolean = true
     ) {
         this.id = id ?? generateGuid();
         this.name = name;
@@ -28,9 +32,29 @@ export class Canvas {
         this.canvasHeight = canvasHeight;
         this.distanceBetweenCards = distanceBetweenCards;
         this.distanceFromBorders = distanceFromBorders;
+        if (hashUpToDate) {
+            this.hashValue = hashValue ?? this.computeHash();
+            this.hashUpToDate = true;
+        } else {
+            this.hashValue = hashValue ?? '';
+            this.hashUpToDate = false;
+        }
     }
 
     get hash(): string {
+        return this.hashValue;
+    }
+
+    refreshHash() {
+        this.hashValue = this.computeHash();
+        this.hashUpToDate = true;
+    }
+
+    markHashOutdated() {
+        this.hashUpToDate = false;
+    }
+
+    private computeHash(): string {
         return hashString(
             stableStringify({
                 name: this.name,
