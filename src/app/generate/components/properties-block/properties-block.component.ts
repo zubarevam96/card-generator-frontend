@@ -18,9 +18,11 @@ import { Template } from '../../../models/template.model';
 export class PropertiesBlockComponent {
   selectedCard: Card | null = null;
   selectedTemplate: Template | null = null;
+  selectedCardsCount = 0;
 
   constructor(private canvasService: CanvasService) {
     this.canvasService.selectedCard$.subscribe(card => (this.selectedCard = card));
     this.canvasService.selectedTemplate$.subscribe(template => (this.selectedTemplate = template));
+    this.canvasService.selectedCards$.subscribe(cards => (this.selectedCardsCount = cards.length));
   }
 }

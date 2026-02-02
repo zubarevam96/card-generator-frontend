@@ -22,6 +22,7 @@ import { AliasService } from '../../../services/alias.service';
 export class CanvasBlockComponent {
   cards: Card[] = [];
   selectedCardId: string | null = null;
+  selectedCards: Card[] = [];
   canvas: Canvas = new Canvas();
   canvases: Canvas[] = [];
   selectedTemplate: Template | null = null;
@@ -55,6 +56,7 @@ export class CanvasBlockComponent {
       this.updateCardPages();
     });
     this.canvasService.selectedCard$.subscribe(c => (this.selectedCardId = c?.id ?? null));
+    this.canvasService.selectedCards$.subscribe(cards => (this.selectedCards = cards));
     this.canvasService.canvas$.subscribe(c => {
       this.canvas = c;
       this.updateCardPages();
@@ -146,12 +148,21 @@ export class CanvasBlockComponent {
     this.canvasService.selectCard(card);
   }
 
+  onCardClick(card: Card, event: MouseEvent) {
+    if (event.ctrlKey || event.metaKey) {
+      this.canvasService.toggleCardSelection(card);
+      return;
+    }
+
+    this.selectCard(card);
+  }
+
   selectCanvas() {
     this.canvasService.showCanvasProperties();
   }
 
   isSelected(card: Card): boolean {
-    return this.selectedCardId === card.id;
+    return this.selectedCards.some(selected => selected.id === card.id);
   }
 
   closeModal(event: MouseEvent) {

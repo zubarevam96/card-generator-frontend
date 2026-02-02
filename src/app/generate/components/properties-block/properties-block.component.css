@@ -5,3 +5,13 @@
   overflow-y: auto;
 }
 
+.multi-selection {
+  padding: 12px;
+  margin: 8px;
+  border: 1px dashed #90caf9;
+  border-radius: 6px;
+  background: #e3f2fd;
+  color: #1565c0;
+  font-weight: 500;
+}
+

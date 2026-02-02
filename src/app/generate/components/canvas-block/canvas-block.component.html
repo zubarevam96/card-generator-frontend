@@ -61,7 +61,7 @@
                     [class.selected]="isSelected(card)"
                     [style.width.px]="canvas.cardWidth"
                     [style.height.px]="canvas.cardHeight"
-                    (click)="selectCard(card)"
+                    (click)="onCardClick(card, $event)"
                 >
                     <div class="card-inner" [innerHTML]="getSafeHtml(card)"></div>
                 </div>

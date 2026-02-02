@@ -35,6 +35,9 @@ export class CanvasService {
   private selectedCardSubject = new BehaviorSubject<Card | null>(null);
   selectedCard$ = this.selectedCardSubject.asObservable();
 
+  private selectedCardsSubject = new BehaviorSubject<Card[]>([]);
+  selectedCards$ = this.selectedCardsSubject.asObservable();
+
   private canvasSubject = new BehaviorSubject<Canvas>(this.canvasesSubject.value[0]);
   canvas$ = this.canvasSubject.asObservable();
 
@@ -80,6 +83,7 @@ export class CanvasService {
     const canvasCards = allCards.filter(card => card.canvasId === canvas.id);
     this.cardsSubject.next(canvasCards);
     this.selectedCardSubject.next(null);
+    this.selectedCardsSubject.next([]);
   }
 
   addCard(
@@ -101,12 +105,42 @@ export class CanvasService {
     if (this.selectedCardSubject.value?.id === id) {
       this.selectedCardSubject.next(null);
     }
+    const filteredSelection = this.selectedCardsSubject.value.filter(card => card.id !== id);
+    if (filteredSelection.length !== this.selectedCardsSubject.value.length) {
+      this.selectedCardsSubject.next(filteredSelection);
+      if (filteredSelection.length === 1) {
+        this.selectedCardSubject.next(filteredSelection[0]);
+      } else if (filteredSelection.length === 0) {
+        this.selectedCardSubject.next(null);
+      }
+    }
   }
 
   selectCard(card: Card) {
     this.selectedCardSubject.next(card);
+    this.selectedCardsSubject.next([card]);
     this.showCanvasPropsSubject.next(false);
     this.selectedTemplateSubject.next(null);  // Close template edit if open
+  }
+
+  toggleCardSelection(card: Card) {
+    const current = this.selectedCardsSubject.value;
+    const exists = current.some(c => c.id === card.id);
+    const updated = exists ? current.filter(c => c.id !== card.id) : [...current, card];
+    this.selectedCardsSubject.next(updated);
+    this.showCanvasPropsSubject.next(false);
+    this.selectedTemplateSubject.next(null);
+
+    if (updated.length === 1) {
+      this.selectedCardSubject.next(updated[0]);
+    } else {
+      this.selectedCardSubject.next(null);
+    }
+  }
+
+  clearCardSelection() {
+    this.selectedCardsSubject.next([]);
+    this.selectedCardSubject.next(null);
   }
 
   updateSelectedHtml(html: string) {
@@ -155,6 +189,7 @@ export class CanvasService {
 
   showCanvasProperties() {
     this.selectedCardSubject.next(null);
+    this.selectedCardsSubject.next([]);
     this.showCanvasPropsSubject.next(true);
     this.selectedTemplateSubject.next(null);
   }
@@ -182,6 +217,7 @@ export class CanvasService {
 
   editTemplate(template: Template) {
     this.selectedCardSubject.next(null);
+    this.selectedCardsSubject.next([]);
     this.showCanvasPropsSubject.next(false);
     this.selectedTemplateSubject.next(template);
   }

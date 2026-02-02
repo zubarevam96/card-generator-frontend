@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { CanvasService } from '../../../services/canvas.service';
 import { CardStorageService } from '../../../services/card-storage.service';
@@ -18,7 +18,9 @@ export class TemplatesBlockComponent {
   cards: Card[] = [];
   expandedTemplates: Set<string> = new Set();  // For expand/collapse
   selectedCanvasId: string = '';
-  selectedCardId: string | null = null;
+  selectedCard: Card | null = null;
+  selectedTemplate: Template | null = null;
+  selectedCards: Card[] = [];
   showJsonModal = false;
   jsonModalTitle = '';
   jsonModalContent = '';
@@ -27,7 +29,11 @@ export class TemplatesBlockComponent {
     this.cardStorageService.templates$.subscribe((templates: Template[]) => (this.templates = templates));
     this.canvasService.cards$.subscribe((cards: Card[]) => (this.cards = cards));
     this.canvasService.selectedCanvas$.subscribe(canvas => (this.selectedCanvasId = canvas.id));
-    this.canvasService.selectedCard$.subscribe(card => (this.selectedCardId = card?.id ?? null));
+    this.canvasService.selectedCard$.subscribe(card => {
+      this.selectedCard = card;
+    });
+    this.canvasService.selectedTemplate$.subscribe(template => (this.selectedTemplate = template));
+    this.canvasService.selectedCards$.subscribe(cards => (this.selectedCards = cards));
   }
 
   getTemplatesForCanvas(): Template[] {
@@ -100,8 +106,51 @@ export class TemplatesBlockComponent {
     this.canvasService.selectCard(card);
   }
 
+  onCardClick(card: Card, event: MouseEvent) {
+    if (event.ctrlKey || event.metaKey) {
+      this.canvasService.toggleCardSelection(card);
+      return;
+    }
+
+    this.selectCard(card);
+  }
+
   isActiveCard(card: Card): boolean {
-    return this.selectedCardId === card.id;
+    return this.selectedCards.some(selected => selected.id === card.id);
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  async handleGlobalKeydown(event: KeyboardEvent): Promise<void> {
+    if (this.isEditableTarget(event.target)) {
+      return;
+    }
+
+    const isMod = event.ctrlKey || event.metaKey;
+    if (!isMod) {
+      return;
+    }
+
+    const key = event.key.toLowerCase();
+
+    if (key === 'c' || key === 'x') {
+      const copied = await this.copySelectionToClipboard();
+      if (copied) {
+        if (key === 'x' && this.selectedCards.length > 0) {
+          const toRemove = [...this.selectedCards];
+          toRemove.forEach(card => this.removeCard(card));
+          this.canvasService.clearCardSelection();
+        }
+        event.preventDefault();
+      }
+      return;
+    }
+
+    if (key === 'v') {
+      const pasted = await this.pasteFromClipboard();
+      if (pasted) {
+        event.preventDefault();
+      }
+    }
   }
 
   removeCard(card: Card) {
@@ -348,6 +397,85 @@ export class TemplatesBlockComponent {
     this.jsonModalTitle = title;
     this.jsonModalContent = content;
     this.showJsonModal = true;
+  }
+
+  private async copySelectionToClipboard(): Promise<boolean> {
+    if (!navigator.clipboard?.writeText) {
+      return false;
+    }
+
+    if (this.selectedCards.length > 0) {
+      const payloads = this.selectedCards.map(card => this.buildCardPayload(card));
+      const payload = this.selectedCards.length === 1 ? payloads[0] : payloads;
+      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+      return true;
+    }
+
+    if (this.selectedTemplate) {
+      const payload = this.buildTemplatePayload(this.selectedTemplate);
+      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+      return true;
+    }
+
+    return false;
+  }
+
+  private async pasteFromClipboard(): Promise<boolean> {
+    if (!navigator.clipboard?.readText) {
+      return false;
+    }
+
+    let raw: string;
+    try {
+      raw = await navigator.clipboard.readText();
+    } catch {
+      return false;
+    }
+
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        parsed.forEach(item => this.importTemplatePayload(item));
+        return true;
+      }
+      if (parsed?.type === 'cards' && Array.isArray(parsed.cards)) {
+        parsed.cards.forEach((item: any) => this.importTemplatePayload(item));
+        return true;
+      }
+      this.importTemplatePayload(parsed);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private buildTemplatePayload(template: Template) {
+    const linkedCards = this.getLinkedCards(template.id);
+    return {
+      type: 'template',
+      version: 1,
+      template: this.toPlainTemplate(template),
+      cards: linkedCards.map(card => this.toPlainCard(card, false))
+    };
+  }
+
+  private buildCardPayload(card: Card) {
+    const template = this.cardStorageService.getTemplateById(card.templateId);
+    return {
+      type: 'card',
+      version: 1,
+      template: template ? this.toPlainTemplate(template) : undefined,
+      card: this.toPlainCard(card, true)
+    };
+  }
+
+  private isEditableTarget(target: EventTarget | null): boolean {
+    if (!target) return false;
+    const element = target as HTMLElement;
+    if (element.isContentEditable) return true;
+    const tagName = element.tagName?.toLowerCase();
+    if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') return true;
+    return Boolean(element.closest('input, textarea, select, [contenteditable="true"], .CodeMirror, .cm-editor'));
   }
 
   private toPlainTemplate(template: Template) {

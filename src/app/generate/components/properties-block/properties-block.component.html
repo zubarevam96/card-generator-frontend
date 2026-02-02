@@ -1,5 +1,6 @@
 <div class="properties-block">
-    <app-canvas-properties *ngIf="!selectedCard && !selectedTemplate"></app-canvas-properties>
-    <app-card-properties *ngIf="selectedCard && !selectedTemplate"></app-card-properties>
+    <app-canvas-properties *ngIf="!selectedCard && !selectedTemplate && selectedCardsCount <= 1"></app-canvas-properties>
+    <div class="multi-selection" *ngIf="selectedCardsCount > 1">Multiple cards selected</div>
+    <app-card-properties *ngIf="selectedCard && !selectedTemplate && selectedCardsCount <= 1"></app-card-properties>
     <app-template-properties *ngIf="selectedTemplate"></app-template-properties>
 </div>
