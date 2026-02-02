@@ -13,8 +13,14 @@ import { map } from 'rxjs';
 })
 export class AliasLibraryComponent {
   showTextForm = false;
+  editingTextAliasId: number | null = null;
 
   textForm = {
+    name: '',
+    content: ''
+  };
+
+  editTextForm = {
     name: '',
     content: ''
   };
@@ -34,18 +40,48 @@ export class AliasLibraryComponent {
   }
 
   addTextAlias(): void {
-    if (!this.textForm.name.trim() || !this.textForm.content.trim()) {
+    const name = this.textForm.name.trim();
+    const content = this.textForm.content.trim();
+    if (!name || !content) {
       alert('Please fill in both name and content');
       return;
     }
 
-    const added = this.aliasService.addTextAlias(this.textForm.name, this.textForm.content);
+    const added = this.aliasService.addTextAlias(name, content);
     if (!added) {
       alert('Alias name already exists. Please choose a unique name.');
       return;
     }
     this.textForm = { name: '', content: '' };
     this.showTextForm = false;
+  }
+
+  startEditTextAlias(alias: { id: number; name: string; content: string }): void {
+    this.editingTextAliasId = alias.id;
+    this.editTextForm = { name: alias.name, content: alias.content };
+  }
+
+  cancelEditTextAlias(): void {
+    this.editingTextAliasId = null;
+    this.editTextForm = { name: '', content: '' };
+  }
+
+  saveTextAlias(): void {
+    if (this.editingTextAliasId === null) return;
+    const name = this.editTextForm.name.trim();
+    const content = this.editTextForm.content.trim();
+    if (!name || !content) {
+      alert('Please fill in both name and content');
+      return;
+    }
+
+    const updated = this.aliasService.updateTextAlias(this.editingTextAliasId, name, content);
+    if (!updated) {
+      alert('Alias name already exists. Please choose a unique name.');
+      return;
+    }
+
+    this.cancelEditTextAlias();
   }
 
   onImageSelected(event: Event): void {

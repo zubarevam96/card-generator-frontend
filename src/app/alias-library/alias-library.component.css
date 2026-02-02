@@ -185,6 +185,16 @@
     max-height: 80px;
 }
 
+.alias-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.edit-form .form-group {
+    margin-bottom: 10px;
+}
+
 .alias-reference {
     font-size: 12px;
     color: #666;
@@ -227,6 +237,21 @@
 
 .delete-btn:hover {
     background: #d32f2f;
+}
+
+.edit-btn,
+.cancel-btn {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background: #f0f0f0;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.edit-btn:hover,
+.cancel-btn:hover {
+    background: #e0e0e0;
 }
 
 .empty-state {

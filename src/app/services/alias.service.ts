@@ -104,6 +104,22 @@ export class AliasService {
     return true;
   }
 
+  updateTextAlias(id: number, name: string, content: string): boolean {
+    const aliases = this.aliasSubject.value;
+    const index = aliases.findIndex(al => al.id === id && al.type === 'text');
+    if (index === -1) return false;
+
+    if (this.isDuplicateName(name, id)) {
+      return false;
+    }
+
+    const existing = aliases[index] as TextAlias;
+    aliases[index] = { ...existing, name, content };
+    this.aliasSubject.next(aliases);
+    this.saveAliases();
+    return true;
+  }
+
   addImageAlias(name: string, dataUrl: string, defaultSize: number = 16): boolean {
     if (this.isDuplicateName(name)) {
       return false;
@@ -178,8 +194,10 @@ export class AliasService {
     return name.trim().toLowerCase();
   }
 
-  private isDuplicateName(name: string): boolean {
+  private isDuplicateName(name: string, excludeId?: number): boolean {
     const normalized = this.normalizeName(name);
-    return this.aliasSubject.value.some(al => this.normalizeName(al.name) === normalized);
+    return this.aliasSubject.value.some(
+      al => this.normalizeName(al.name) === normalized && al.id !== excludeId
+    );
   }
 }
