@@ -38,7 +38,7 @@
     <div class="canvas-pages-container">
         <!-- Each page is a canvas-container with fixed canvas dimensions -->
         <div
-            *ngFor="let page of cardPages; let pageIndex = index"
+            *ngFor="let page of cardPages; let pageIndex = index; trackBy: trackByPageIndex"
             class="canvas-container"
             [style.width.px]="canvas.canvasWidth"
             [style.height.px]="canvas.canvasHeight"
@@ -56,7 +56,7 @@
                 [style.gap.px]="canvas.distanceBetweenCards"
             >
                 <div
-                    *ngFor="let card of page"
+                    *ngFor="let card of page; trackBy: trackByCardId"
                     class="canvas-card"
                     [class.selected]="isSelected(card)"
                     [style.width.px]="canvas.cardWidth"

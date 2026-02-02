@@ -35,6 +35,8 @@ export class CanvasBlockComponent {
   jsonModalTitle = '';
   jsonModalContent = '';
 
+  private safeHtmlCache = new Map<string, { rendered: string; safe: SafeHtml }>();
+
   private placeholderRegex = /{{\s*([\w-]+)\s*=\s*(?:"([^"]*)"|\d+)\s*}}/g;
 
   constructor(
@@ -53,6 +55,7 @@ export class CanvasBlockComponent {
     });
     this.canvasService.cards$.subscribe(cards => {
       this.cards = cards;
+      this.pruneSafeHtmlCache();
       this.updateCardPages();
     });
     this.canvasService.selectedCard$.subscribe(c => (this.selectedCardId = c?.id ?? null));
@@ -114,8 +117,15 @@ export class CanvasBlockComponent {
   }
 
   getSafeHtml(card: Card): SafeHtml {
-    const resolvedHtml = this.aliasService.applyAliasesToHtml(card.renderedHtml);
-    return this.sanitizer.bypassSecurityTrustHtml(resolvedHtml);
+    const rendered = card.renderedHtml;
+    const cached = this.safeHtmlCache.get(card.id);
+    if (cached && cached.rendered === rendered) {
+      return cached.safe;
+    }
+    const resolvedHtml = this.aliasService.applyAliasesToHtml(rendered);
+    const safe = this.sanitizer.bypassSecurityTrustHtml(resolvedHtml);
+    this.safeHtmlCache.set(card.id, { rendered, safe });
+    return safe;
   }
 
   getPreviewSafeHtml(): SafeHtml {
@@ -163,6 +173,14 @@ export class CanvasBlockComponent {
 
   isSelected(card: Card): boolean {
     return this.selectedCards.some(selected => selected.id === card.id);
+  }
+
+  trackByCardId(index: number, card: Card): string {
+    return card.id;
+  }
+
+  trackByPageIndex(index: number): number {
+    return index;
   }
 
   closeModal(event: MouseEvent) {
@@ -268,6 +286,15 @@ export class CanvasBlockComponent {
     this.jsonModalTitle = title;
     this.jsonModalContent = content;
     this.showJsonModal = true;
+  }
+
+  private pruneSafeHtmlCache() {
+    const ids = new Set(this.cards.map(card => card.id));
+    for (const key of this.safeHtmlCache.keys()) {
+      if (!ids.has(key)) {
+        this.safeHtmlCache.delete(key);
+      }
+    }
   }
 
   private toPlainCanvas(canvas: Canvas) {
