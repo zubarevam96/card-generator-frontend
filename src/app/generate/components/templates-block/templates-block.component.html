@@ -18,12 +18,15 @@
             <button class="small-btn" (click)="deleteTemplate(template)">Delete</button>
         </div>
         <div *ngIf="isExpanded(template.id)" class="tree-children">
-            <div *ngFor="let card of getLinkedCards(template.id)" class="tree-node child-node">
+            <ng-container *ngFor="let card of getLinkedCards(template.id); let i = index">
+                <div *ngIf="i > 0" class="cards-separator"></div>
+                <div class="tree-node child-node card-row" [class.active-card]="isActiveCard(card)">
                 <strong class="clickable" (click)="selectCard(card)">{{ card.name || 'undefined' }}</strong>
                 <button class="small-btn" (click)="exportCard(card)">Export card</button>
                 <button class="small-btn" (click)="duplicateCard(card)">Duplicate</button>
                 <button class="small-btn" (click)="removeCard(card)">Remove</button>
-            </div>
+                </div>
+            </ng-container>
             <div *ngIf="getLinkedCards(template.id).length === 0" class="no-children">
                 No linked cards
             </div>
@@ -31,7 +34,7 @@
     </div>
     <ng-container *ngIf="getUnlinkedCards().length > 0">
         <h3>Unlinked Cards</h3>
-        <div *ngFor="let card of getUnlinkedCards()">
+        <div *ngFor="let card of getUnlinkedCards()" class="card-row" [class.active-card]="isActiveCard(card)">
             <strong class="clickable" (click)="selectCard(card)">{{ card.name || 'undefined' }}</strong>
             <button class="small-btn" (click)="exportCard(card)">Export card</button>
             <button class="small-btn" (click)="duplicateCard(card)">Duplicate</button>

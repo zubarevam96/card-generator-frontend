@@ -12,11 +12,31 @@
     margin-left: 20px;
 }
 
+.cards-separator {
+    height: 1px;
+    background-color: #d0d0d0;
+    margin: 6px 0 8px 0;
+}
+
 .child-node {
     display: flex;
     align-items: center;
     gap: 5px;
     font-size: 0.9em;
+}
+
+.card-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9em;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.card-row.active-card {
+    background-color: #e3f2fd;
+    outline: 1px solid #90caf9;
 }
 
 .toggle-btn {

@@ -18,6 +18,7 @@ export class TemplatesBlockComponent {
   cards: Card[] = [];
   expandedTemplates: Set<string> = new Set();  // For expand/collapse
   selectedCanvasId: string = '';
+  selectedCardId: string | null = null;
   showJsonModal = false;
   jsonModalTitle = '';
   jsonModalContent = '';
@@ -26,6 +27,7 @@ export class TemplatesBlockComponent {
     this.cardStorageService.templates$.subscribe((templates: Template[]) => (this.templates = templates));
     this.canvasService.cards$.subscribe((cards: Card[]) => (this.cards = cards));
     this.canvasService.selectedCanvas$.subscribe(canvas => (this.selectedCanvasId = canvas.id));
+    this.canvasService.selectedCard$.subscribe(card => (this.selectedCardId = card?.id ?? null));
   }
 
   getTemplatesForCanvas(): Template[] {
@@ -96,6 +98,10 @@ export class TemplatesBlockComponent {
 
   selectCard(card: Card) {
     this.canvasService.selectCard(card);
+  }
+
+  isActiveCard(card: Card): boolean {
+    return this.selectedCardId === card.id;
   }
 
   removeCard(card: Card) {
