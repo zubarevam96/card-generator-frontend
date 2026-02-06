@@ -28,6 +28,10 @@
     border-bottom-color: #2196f3;
 }
 
+.logs-tab {
+    margin-left: auto;
+}
+
 .generate-layout {
     display: grid;
     grid-template-columns: 1fr 8px 2fr 8px 1fr;

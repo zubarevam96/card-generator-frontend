@@ -5,6 +5,7 @@ import { CardPropertiesComponent } from './card-properties/card-properties.compo
 import { CanvasPropertiesComponent } from './canvas-properties/canvas-properties.component';
 import { TemplatePropertiesComponent } from './template-properties/template-properties.component';
 import { CanvasService } from '../../../services/canvas.service';
+import { LoggingService } from '../../../services/logging.service';
 import { Card } from '../../../models/card.model';
 import { Template } from '../../../models/template.model';
 
@@ -20,9 +21,24 @@ export class PropertiesBlockComponent {
   selectedTemplate: Template | null = null;
   selectedCardsCount = 0;
 
-  constructor(private canvasService: CanvasService) {
-    this.canvasService.selectedCard$.subscribe(card => (this.selectedCard = card));
-    this.canvasService.selectedTemplate$.subscribe(template => (this.selectedTemplate = template));
-    this.canvasService.selectedCards$.subscribe(cards => (this.selectedCardsCount = cards.length));
+  constructor(private canvasService: CanvasService, private loggingService: LoggingService) {
+    this.canvasService.selectedCard$.subscribe(card => {
+      this.selectedCard = card;
+      this.loggingService.log('properties-block', 'debug', 'Selected card changed', {
+        cardId: card?.id ?? null
+      });
+    });
+    this.canvasService.selectedTemplate$.subscribe(template => {
+      this.selectedTemplate = template;
+      this.loggingService.log('properties-block', 'debug', 'Selected template changed', {
+        templateId: template?.id ?? null
+      });
+    });
+    this.canvasService.selectedCards$.subscribe(cards => {
+      this.selectedCardsCount = cards.length;
+      this.loggingService.log('properties-block', 'debug', 'Selected cards count changed', {
+        count: cards.length
+      });
+    });
   }
 }

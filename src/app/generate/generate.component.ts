@@ -5,16 +5,26 @@ import { CanvasBlockComponent } from './components/canvas-block/canvas-block.com
 import { TemplatesBlockComponent } from './components/templates-block/templates-block.component';
 import { ImagesLibraryComponent } from '../images-library/images-library.component';
 import { AliasLibraryComponent } from '../alias-library/alias-library.component';
+import { LoggingModalComponent } from '../shared/logging-modal/logging-modal.component';
 
 @Component({
   selector: 'app-generate',
   standalone: true,
-  imports: [CommonModule, PropertiesBlockComponent, CanvasBlockComponent, TemplatesBlockComponent, ImagesLibraryComponent, AliasLibraryComponent],
+  imports: [
+    CommonModule,
+    PropertiesBlockComponent,
+    CanvasBlockComponent,
+    TemplatesBlockComponent,
+    ImagesLibraryComponent,
+    AliasLibraryComponent,
+    LoggingModalComponent
+  ],
   templateUrl: './generate.component.html',
   styleUrls: ['./generate.component.css']
 })
 export class GenerateComponent {
   activeTab: 'canvas' | 'images' | 'aliases' = 'canvas';
+  showLoggingModal = false;
   
   showProperties = true;
   showTemplates = true;
@@ -55,6 +65,14 @@ export class GenerateComponent {
 
   switchTab(tab: 'canvas' | 'images' | 'aliases'): void {
     this.activeTab = tab;
+  }
+
+  openLoggingModal(): void {
+    this.showLoggingModal = true;
+  }
+
+  closeLoggingModal(): void {
+    this.showLoggingModal = false;
   }
 
   startDrag(side: 'left' | 'right', event: MouseEvent): void {

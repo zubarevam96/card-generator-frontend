@@ -1,0 +1,69 @@
+<div class="logging-modal-backdrop" *ngIf="visible" (click)="onClose()">
+  <div class="logging-modal" (click)="$event.stopPropagation()">
+    <div class="logging-modal__header">
+      <h4>Logs</h4>
+      <div class="header-actions">
+        <button type="button" class="secondary" (click)="refresh()">Refresh</button>
+        <button type="button" class="secondary" (click)="onClose()">Close</button>
+      </div>
+    </div>
+
+    <div class="logging-modal__body">
+      <aside class="modules">
+        <div class="modules-title">Modules</div>
+        <button
+          type="button"
+          class="module-btn"
+          *ngFor="let module of modules"
+          [class.active]="module === selectedModule"
+          (click)="loadModule(module)"
+        >
+          {{ module }}
+        </button>
+      </aside>
+
+      <section class="details">
+        <div class="toolbar">
+          <div class="level">
+            <label for="log-level">Level</label>
+            <select
+              id="log-level"
+              [ngModel]="moduleLevel"
+              (ngModelChange)="setLevel($event)"
+            >
+              <option *ngFor="let level of levels" [value]="level">{{ level }}</option>
+            </select>
+          </div>
+          <div class="actions">
+            <button type="button" class="secondary" (click)="clearModule()">Clear module</button>
+          </div>
+        </div>
+
+        <div class="files">
+          <div class="files-header">Log files</div>
+          <div class="file-row" *ngFor="let file of files">
+            <button
+              type="button"
+              class="file-select"
+              [class.active]="file.id === selectedFileId"
+              (click)="loadFile(file.id)"
+            >
+              <div class="file-name">{{ file.id }}</div>
+              <div class="file-meta">{{ formatDate(file.createdAt) }} · {{ formatSize(file.size) }}</div>
+            </button>
+            <div class="file-actions">
+              <button type="button" class="secondary" (click)="downloadFile(file.id)">Download</button>
+              <button type="button" class="danger" (click)="deleteFile(file.id)">Delete</button>
+            </div>
+          </div>
+          <div class="empty" *ngIf="files.length === 0">No logs yet.</div>
+        </div>
+
+        <div class="content">
+          <div class="content-header">Content</div>
+          <pre class="content-body">{{ fileContent || 'Select a log file to view its content.' }}</pre>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

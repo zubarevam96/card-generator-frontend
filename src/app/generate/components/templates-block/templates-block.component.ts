@@ -5,6 +5,7 @@ import { CardStorageService } from '../../../services/card-storage.service';
 import { Card } from '../../../models/card.model';
 import { Template } from '../../../models/template.model';
 import { JsonModalComponent } from '../../../shared/json-modal/json-modal.component';
+import { LoggingService } from '../../../services/logging.service';
 
 @Component({
   selector: 'app-templates-block',
@@ -25,7 +26,11 @@ export class TemplatesBlockComponent {
   jsonModalTitle = '';
   jsonModalContent = '';
 
-  constructor(private canvasService: CanvasService, private cardStorageService: CardStorageService) {
+  constructor(
+    private canvasService: CanvasService,
+    private cardStorageService: CardStorageService,
+    private loggingService: LoggingService
+  ) {
     this.cardStorageService.templates$.subscribe((templates: Template[]) => (this.templates = templates));
     this.canvasService.cards$.subscribe((cards: Card[]) => (this.cards = cards));
     this.canvasService.selectedCanvas$.subscribe(canvas => (this.selectedCanvasId = canvas.id));
@@ -86,24 +91,34 @@ export class TemplatesBlockComponent {
     // Add the card as linked with variables and templateId
     const copyName = `${template.name} (from template)`;
     this.canvasService.addCard(copyName, templateHtml, template.id, variables);
+    this.loggingService.log('templates-block', 'info', 'Loaded template into new card', {
+      templateId: template.id,
+      cardName: copyName
+    });
   }
 
   newTemplate() {
     const blankTemplate = this.cardStorageService.addTemplate('New Template', '', this.selectedCanvasId);
     // Edit the newly added template
     this.canvasService.editTemplate(blankTemplate);
+    this.loggingService.log('templates-block', 'info', 'Created new template', {
+      templateId: blankTemplate.id
+    });
   }
 
   editTemplate(template: Template) {
     this.canvasService.editTemplate(template);
+    this.loggingService.log('templates-block', 'debug', 'Editing template', { templateId: template.id });
   }
 
   deleteTemplate(template: Template) {
     this.cardStorageService.deleteTemplate(template.id);
+    this.loggingService.log('templates-block', 'info', 'Deleted template', { templateId: template.id });
   }
 
   selectCard(card: Card) {
     this.canvasService.selectCard(card);
+    this.loggingService.log('templates-block', 'debug', 'Selected card', { cardId: card.id });
   }
 
   onCardClick(card: Card, event: MouseEvent) {
@@ -155,10 +170,12 @@ export class TemplatesBlockComponent {
 
   removeCard(card: Card) {
     this.canvasService.deleteCard(card.id);
+    this.loggingService.log('templates-block', 'info', 'Deleted card', { cardId: card.id });
   }
 
   saveCardAsTemplate(card: Card) {
     this.cardStorageService.addTemplate(card.name, card.templateHtml, this.selectedCanvasId);
+    this.loggingService.log('templates-block', 'info', 'Saved card as template', { cardId: card.id });
   }
 
   // Duplicate a template (without copying its cards)
@@ -167,6 +184,10 @@ export class TemplatesBlockComponent {
     const newTemplate = this.cardStorageService.addTemplate(name, template.templateHtml, template.canvasId);
     // Optionally open the duplicated template in editor
     this.canvasService.editTemplate(newTemplate);
+    this.loggingService.log('templates-block', 'info', 'Duplicated template', {
+      templateId: template.id,
+      newTemplateId: newTemplate.id
+    });
   }
 
   // Duplicate a card (copy current variables and linkage)
@@ -174,6 +195,7 @@ export class TemplatesBlockComponent {
     const name = card.name && card.name.trim().length > 0 ? `${card.name}` : 'Card';
     // Use CanvasService to ensure proper canvasId is applied
     this.canvasService.addCard(name, card.templateHtml, card.templateId, { ...card.variables });
+    this.loggingService.log('templates-block', 'info', 'Duplicated card', { cardId: card.id });
   }
 
   exportTemplate(template: Template) {
@@ -185,6 +207,7 @@ export class TemplatesBlockComponent {
       cards: linkedCards.map(card => this.toPlainCard(card, false))
     };
     this.openJsonModal(`Export template: ${template.name || 'undefined'}`, JSON.stringify(payload, null, 2));
+    this.loggingService.log('templates-block', 'info', 'Exported template JSON', { templateId: template.id });
   }
 
   exportCard(card: Card) {
@@ -196,6 +219,7 @@ export class TemplatesBlockComponent {
       card: this.toPlainCard(card, true)
     };
     this.openJsonModal(`Export card: ${card.name || 'undefined'}`, JSON.stringify(payload, null, 2));
+    this.loggingService.log('templates-block', 'info', 'Exported card JSON', { cardId: card.id });
   }
 
   onTemplateImportChange(event: Event) {

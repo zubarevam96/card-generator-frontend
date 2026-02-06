@@ -20,6 +20,9 @@
     >
         Aliases
     </button>
+    <button class="global-tab logs-tab" type="button" (click)="openLoggingModal()">
+        Logs
+    </button>
 </div>
 
 <div class="active-tab-debug">Active tab: {{ activeTab }}</div>
@@ -72,3 +75,5 @@
     <div class="aliases-placeholder">Aliases content</div>
     <app-alias-library></app-alias-library>
 </div>
+
+<app-logging-modal [visible]="showLoggingModal" (close)="closeLoggingModal()"></app-logging-modal>

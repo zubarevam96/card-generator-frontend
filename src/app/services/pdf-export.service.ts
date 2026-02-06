@@ -4,12 +4,13 @@ import { PDFDocument } from 'pdf-lib';
 import { Card } from '../models/card.model';
 import { Canvas } from '../models/canvas.model';
 import { AliasService } from './alias.service';
+import { LoggingService } from './logging.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PdfExportService {
-  constructor(private aliasService: AliasService) {}
+  constructor(private aliasService: AliasService, private loggingService: LoggingService) {}
 
   /**
    * Export cards to PDF based on Canvas dimensions
@@ -19,9 +20,15 @@ export class PdfExportService {
    */
   exportCardsToPdf(cards: Card[], canvas: Canvas, filename: string = 'cards'): void {
     if (cards.length === 0) {
-      console.warn('No cards to export');
+      this.loggingService.log('exporting', 'error', 'No cards to export');
       return;
     }
+
+    this.loggingService.log('exporting', 'info', 'Starting PDF export', {
+      cards: cards.length,
+      canvasId: canvas.id,
+      filename
+    });
 
     // Calculate layout metrics (account for distanceFromBorders as margins)
     const margin = canvas.distanceFromBorders ?? 0;
@@ -35,6 +42,12 @@ export class PdfExportService {
     const rowsPerPage = Math.max(1, Math.floor((availableHeight + canvas.distanceBetweenCards) / cardHeightWithGap));
     
     const cardsPerPage = cardsPerRow * rowsPerPage;
+
+    this.loggingService.log('exporting', 'debug', 'Calculated page layout', {
+      cardsPerRow,
+      rowsPerPage,
+      cardsPerPage
+    });
 
     // Split cards into pages
     const pages: Card[][] = [];
@@ -50,8 +63,10 @@ export class PdfExportService {
    * Generate PDF with card-aware page breaks
    */
   private generatePdfPages(pages: Card[][], canvas: Canvas, cardsPerRow: number, filename: string): void {
-    this.createMultiPagePdf(pages, canvas, cardsPerRow, filename).catch(() => {
-      console.warn('PDF export failed');
+    this.createMultiPagePdf(pages, canvas, cardsPerRow, filename).catch((error) => {
+      this.loggingService.log('exporting', 'error', 'PDF export failed', {
+        error: this.serializeError(error)
+      });
     });
   }
 
@@ -67,22 +82,66 @@ export class PdfExportService {
 
     const pdf = await PDFDocument.create();
 
-    for (const pageCards of pages) {
+    this.loggingService.log('exporting', 'debug', 'Rendering PDF pages', { pages: pages.length });
+
+    for (let pageIndex = 0; pageIndex < pages.length; pageIndex += 1) {
+      const pageCards = pages[pageIndex];
       const container = this.createPageContainer(pageCards, canvas, cardsPerRow);
       try {
-        await this.waitForNextFrame();
-        const dataUrl = await toPng(container, {
-          backgroundColor: '#ffffff',
-          cacheBust: true,
-          pixelRatio: Math.max(2, Math.floor((window as any).devicePixelRatio || 2)),
-          width: canvas.canvasWidth,
-          height: canvas.canvasHeight
+        this.loggingService.log('exporting', 'debug', 'Rendering page', {
+          pageIndex,
+          totalPages: pages.length,
+          cardCount: pageCards.length
         });
+        await this.waitForNextFrame();
+        const prepareStart = performance.now();
+        const failedImages = await this.withTimeout(
+          this.prepareImages(container),
+          8000,
+          `prepare images for page ${pageIndex + 1}/${pages.length}`
+        );
+        if (failedImages.length > 0) {
+          this.loggingService.log('exporting', 'error', 'Replacing failed images during export', {
+            pageIndex,
+            failedImages
+          });
+        }
+        this.loggingService.log('exporting', 'debug', 'Prepared images', {
+          pageIndex,
+          failedCount: failedImages.length,
+          durationMs: Math.round(performance.now() - prepareStart)
+        });
+        try {
+          const dataUrl = await this.withTimeout(
+            toPng(container, {
+            backgroundColor: '#ffffff',
+            cacheBust: true,
+            imagePlaceholder: this.transparentPixel(),
+              skipFonts: true,
+            pixelRatio: Math.max(2, Math.floor((window as any).devicePixelRatio || 2)),
+            width: canvas.canvasWidth,
+            height: canvas.canvasHeight
+            }),
+            15000,
+            `render page ${pageIndex + 1}/${pages.length}`
+          );
 
-        const imageBytes = this.dataUrlToUint8Array(dataUrl);
-        const pngImage = await pdf.embedPng(imageBytes);
-        const page = pdf.addPage([pageWidthPt, pageHeightPt]);
-        page.drawImage(pngImage, { x: 0, y: 0, width: pageWidthPt, height: pageHeightPt });
+          const imageBytes = this.dataUrlToUint8Array(dataUrl);
+          const pngImage = await pdf.embedPng(imageBytes);
+          const page = pdf.addPage([pageWidthPt, pageHeightPt]);
+          page.drawImage(pngImage, { x: 0, y: 0, width: pageWidthPt, height: pageHeightPt });
+          this.loggingService.log('exporting', 'debug', 'Rendered page', {
+            pageIndex,
+            totalPages: pages.length
+          });
+        } catch (error) {
+          this.loggingService.log('exporting', 'error', 'Failed to render PDF page', {
+            pageIndex,
+            cardIds: pageCards.map(card => card.id),
+            error: this.serializeError(error)
+          });
+          throw error;
+        }
       } finally {
         document.body.removeChild(container);
       }
@@ -98,6 +157,11 @@ export class PdfExportService {
     link.download = `${filename}.pdf`;
     link.click();
     URL.revokeObjectURL(url);
+
+    this.loggingService.log('exporting', 'info', 'PDF export completed', {
+      pages: pages.length,
+      filename
+    });
   }
 
   /**
@@ -308,5 +372,152 @@ export class PdfExportService {
 
   private waitForNextFrame(): Promise<void> {
     return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+  }
+
+  private withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error(`Timed out after ${timeoutMs}ms: ${label}`));
+      }, timeoutMs);
+
+      promise
+        .then((result) => {
+          clearTimeout(timer);
+          resolve(result);
+        })
+        .catch((error) => {
+          clearTimeout(timer);
+          reject(error);
+        });
+    });
+  }
+
+  private async prepareImages(container: HTMLElement): Promise<string[]> {
+    const images = Array.from(container.querySelectorAll('img'));
+    const failed: string[] = [];
+
+    await Promise.all(
+      images.map(async (img) => {
+        const src = img.getAttribute('src') ?? '';
+        if (!src) return;
+
+        img.setAttribute('crossorigin', 'anonymous');
+        img.setAttribute('referrerpolicy', 'no-referrer');
+
+        const ok = await this.preloadImage(src);
+        if (!ok) {
+          failed.push(src);
+          img.setAttribute('src', this.transparentPixel());
+        }
+      })
+    );
+
+    const failedBackgrounds = await this.prepareBackgroundImages(container);
+    failed.push(...failedBackgrounds.map(url => `background:${url}`));
+
+    return failed;
+  }
+
+  private async prepareBackgroundImages(container: HTMLElement): Promise<string[]> {
+    const elements = Array.from(container.querySelectorAll<HTMLElement>('*'));
+    if (elements.length === 0) return [];
+
+    const usage = new Map<string, HTMLElement[]>();
+    for (const element of elements) {
+      const style = getComputedStyle(element);
+      const background = style.backgroundImage;
+      if (!background || background === 'none') continue;
+
+      const urls = this.extractCssUrls(background);
+      for (const url of urls) {
+        if (!usage.has(url)) usage.set(url, []);
+        usage.get(url)?.push(element);
+      }
+    }
+
+    if (usage.size === 0) return [];
+
+    const failed: string[] = [];
+    await Promise.all(
+      Array.from(usage.keys()).map(async (url) => {
+        const ok = await this.preloadImage(url);
+        if (!ok) {
+          failed.push(url);
+          const targets = usage.get(url) ?? [];
+          for (const target of targets) {
+            target.style.backgroundImage = 'none';
+          }
+        }
+      })
+    );
+
+    return failed;
+  }
+
+  private extractCssUrls(value: string): string[] {
+    const urls: string[] = [];
+    const regex = /url\((['"]?)(.*?)\1\)/g;
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(value))) {
+      if (match[2]) urls.push(match[2]);
+    }
+    return urls;
+  }
+
+  private preloadImage(src: string, timeoutMs: number = 5000): Promise<boolean> {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.referrerPolicy = 'no-referrer';
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        resolve(false);
+      }, timeoutMs);
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = src;
+      const finalize = (ok: boolean) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(ok);
+      };
+      img.onload = () => finalize(true);
+      img.onerror = () => finalize(false);
+    });
+  }
+
+  private transparentPixel(): string {
+    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
+  }
+
+  private serializeError(error: unknown): { message?: string; stack?: string; name?: string; raw?: string; type?: string; targetSrc?: string } {
+    if (error instanceof Error) {
+      return {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      };
+    }
+
+    if (error instanceof Event) {
+      const target = error.target as HTMLImageElement | null;
+      return {
+        type: error.type,
+        targetSrc: target?.src
+      };
+    }
+
+    if (typeof error === 'string') {
+      return { raw: error };
+    }
+
+    try {
+      return { raw: JSON.stringify(error) };
+    } catch {
+      return { raw: String(error) };
+    }
   }
 }

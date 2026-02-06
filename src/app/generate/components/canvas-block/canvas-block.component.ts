@@ -10,6 +10,7 @@ import { Canvas } from '../../../models/canvas.model';
 import { CardStorageService } from '../../../services/card-storage.service';
 import { JsonModalComponent } from '../../../shared/json-modal/json-modal.component';
 import { AliasService } from '../../../services/alias.service';
+import { LoggingService } from '../../../services/logging.service';
 
 @Component({
   selector: 'app-canvas-block',
@@ -44,7 +45,8 @@ export class CanvasBlockComponent {
     private sanitizer: DomSanitizer,
     private pdfExportService: PdfExportService,
     private cardStorageService: CardStorageService,
-    private aliasService: AliasService
+    private aliasService: AliasService,
+    private loggingService: LoggingService
   ) {
     this.canvasService.canvases$.subscribe(canvases => {
       this.canvases = canvases;
@@ -98,6 +100,12 @@ export class CanvasBlockComponent {
     const cardsPerRow = Math.max(1, Math.floor((availableWidth + gap) / (cardWidth + gap)));
     const rowsPerPage = Math.max(1, Math.floor((availableHeight + gap) / (cardHeight + gap)));
     const cardsPerPage = cardsPerRow * rowsPerPage;
+
+    this.loggingService.log('canvas-block', 'debug', 'Updated card pages layout', {
+      cardsPerRow,
+      rowsPerPage,
+      cardsPerPage
+    });
 
     // Store computed values for template bindings (grid layout)
     this.cardsPerRowNum = cardsPerRow;
@@ -156,6 +164,7 @@ export class CanvasBlockComponent {
 
   selectCard(card: Card) {
     this.canvasService.selectCard(card);
+    this.loggingService.log('canvas-block', 'debug', 'Selected card', { cardId: card.id });
   }
 
   onCardClick(card: Card, event: MouseEvent) {
@@ -169,6 +178,7 @@ export class CanvasBlockComponent {
 
   selectCanvas() {
     this.canvasService.showCanvasProperties();
+    this.loggingService.log('canvas-block', 'debug', 'Opened canvas properties');
   }
 
   isSelected(card: Card): boolean {
@@ -191,19 +201,23 @@ export class CanvasBlockComponent {
 
   switchCanvas(canvas: Canvas) {
     this.canvasService.selectCanvas(canvas);
+    this.loggingService.log('canvas-block', 'info', 'Switched canvas', { canvasId: canvas.id });
   }
 
   addNewCanvas() {
     this.canvasService.addCanvas();
+    this.loggingService.log('canvas-block', 'info', 'Added new canvas');
   }
 
   deleteCanvas(canvasId: string) {
     if (this.canvases.length <= 1) {
       alert('Cannot delete the only canvas');
+      this.loggingService.log('canvas-block', 'error', 'Cannot delete the only canvas');
       return;
     }
     if (confirm('Delete this canvas and all its cards?')) {
       this.canvasService.deleteCanvas(canvasId);
+      this.loggingService.log('canvas-block', 'info', 'Deleted canvas', { canvasId });
     }
   }
 
@@ -213,6 +227,10 @@ export class CanvasBlockComponent {
       const newName = prompt('Enter new name:', canvas.name);
       if (newName && newName.trim()) {
         this.canvasService.renameCanvas(canvasId, newName.trim());
+        this.loggingService.log('canvas-block', 'info', 'Renamed canvas', {
+          canvasId,
+          name: newName.trim()
+        });
       }
     }
   }
@@ -220,9 +238,14 @@ export class CanvasBlockComponent {
   async exportToPdf() {
     if (this.cards.length === 0) {
       alert('No cards to export');
+      this.loggingService.log('canvas-block', 'error', 'No cards to export');
       return;
     }
     await this.canvasService.flushPendingTemplateUpdates();
+    this.loggingService.log('canvas-block', 'info', 'Exporting cards to PDF', {
+      cards: this.cards.length,
+      canvasId: this.canvas.id
+    });
     this.pdfExportService.exportCardsToPdf(this.cards, this.canvas, 'cards');
   }
 
@@ -240,6 +263,7 @@ export class CanvasBlockComponent {
     };
 
     this.openJsonModal(`Export canvas: ${this.canvas.name}`, JSON.stringify(payload, null, 2));
+    this.loggingService.log('canvas-block', 'info', 'Exported canvas JSON', { canvasId: this.canvas.id });
   }
 
   onCanvasImportChange(event: Event) {
@@ -254,9 +278,11 @@ export class CanvasBlockComponent {
         const imported = this.canvasService.importCanvas(parsed);
         if (!imported) {
           alert('Invalid canvas JSON');
+          this.loggingService.log('canvas-block', 'error', 'Invalid canvas JSON import');
         }
       } catch (err) {
         alert('Invalid canvas JSON');
+        this.loggingService.log('canvas-block', 'error', 'Canvas JSON import failed', err);
       }
       input.value = '';
     };
@@ -271,9 +297,11 @@ export class CanvasBlockComponent {
       const imported = this.canvasService.importCanvas(parsed);
       if (!imported) {
         alert('Invalid canvas JSON');
+        this.loggingService.log('canvas-block', 'error', 'Invalid canvas JSON import');
       }
     } catch (err) {
       alert('Invalid canvas JSON');
+      this.loggingService.log('canvas-block', 'error', 'Canvas JSON import failed', err);
     }
   }
 

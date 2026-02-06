@@ -43,3 +43,6 @@ __screenshots__/
 Thumbs.db
 # Template examples
 /templates
+
+# Logs
+/logs
