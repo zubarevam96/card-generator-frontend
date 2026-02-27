@@ -72,22 +72,32 @@ export class Card {
   }
 
   get renderedHtml(): string {
-    const placeholderRegex = /{{\s*([^{}\s=]+)\s*(?:=\s*("[^"]*"|'[^']*'))?\s*}}/g;
-    return this.templateHtml.replace(placeholderRegex, (match, key: string, defaultValue: string | undefined) => {
-      const normalizedDefault = defaultValue ? defaultValue.slice(1, -1) : undefined;
-      const resolved = this.variables?.[key] ?? normalizedDefault ?? '';
-      if (resolved === '') return '';
+    const placeholderRegex =
+      /{{\s*([^{}\s=]+)\s*(?:=\s*(?:"([^"]*)"|'([^']*)'|(\d+)))?\s*}}/g;
+    return this.templateHtml.replace(
+      placeholderRegex,
+      (
+        match,
+        key: string,
+        doubleQuoted: string | undefined,
+        singleQuoted: string | undefined,
+        numeric: string | undefined
+      ) => {
+        const normalizedDefault = doubleQuoted ?? singleQuoted ?? numeric;
+        const resolved = this.variables?.[key] ?? normalizedDefault ?? '';
+        if (resolved === '') return '';
 
-      const fontSize = this.variableFontSizes?.[key];
-      if (fontSize === undefined || fontSize === null) {
-        return resolved;
+        const fontSize = this.variableFontSizes?.[key];
+        if (fontSize === undefined || fontSize === null) {
+          return resolved;
+        }
+
+        const lineHeight = Math.round(fontSize * 1.2) || fontSize || 12;
+        const isBlockContent = /<\s*(div|p|ul|ol|li|table|tr|td|th|section|article|header|footer|h1|h2|h3|h4|h5|h6)[^>]*>/i.test(resolved);
+        const tag = isBlockContent ? 'div' : 'span';
+        const display = isBlockContent ? 'block' : 'inline-block';
+        return `<${tag} style="font-size: ${fontSize}px; line-height: ${lineHeight}px; display: ${display};">${resolved}</${tag}>`;
       }
-
-      const lineHeight = Math.round(fontSize * 1.2) || fontSize || 12;
-      const isBlockContent = /<\s*(div|p|ul|ol|li|table|tr|td|th|section|article|header|footer|h1|h2|h3|h4|h5|h6)[^>]*>/i.test(resolved);
-      const tag = isBlockContent ? 'div' : 'span';
-      const display = isBlockContent ? 'block' : 'inline-block';
-      return `<${tag} style="font-size: ${fontSize}px; line-height: ${lineHeight}px; display: ${display};">${resolved}</${tag}>`;
-    });
+    );
   }
 }

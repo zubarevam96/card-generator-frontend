@@ -244,8 +244,8 @@
     line-height: 1.15;
 }
 
-/* Ensure images inside card fill the width of the inner area and don't add gaps */
-.card-inner img {
+/* Ensure images fill the width only when no explicit sizing is provided */
+.card-inner img:not([width]):not([height]) {
     display: block;
     max-width: 100%;
     height: auto;
