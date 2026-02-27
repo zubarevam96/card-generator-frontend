@@ -55,7 +55,7 @@
                 <div class="alias-item" *ngFor="let al of (textAliases$ | async)">
                     <div class="text-alias">
                         <div class="alias-name">{{ al.name }}</div>
-                        <div class="alias-preview" [innerHTML]="al.content"></div>
+                        <div class="alias-preview" [innerHTML]="getAliasPreview(al.content)"></div>
                         <div class="alias-actions">
                             <button type="button" (click)="startEditTextAlias(al)" class="edit-btn">Edit</button>
                             <button type="button" (click)="deleteAlias(al.id)" class="delete-btn">Delete</button>

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { AliasService } from '../services/alias.service';
 import { map } from 'rxjs';
@@ -33,7 +34,10 @@ export class AliasLibraryComponent {
   hasTextAliases$;
   hasImageAliases$;
 
-  constructor(private aliasService: AliasService) {
+  constructor(
+    private aliasService: AliasService,
+    private sanitizer: DomSanitizer
+  ) {
     this.aliases$ = this.aliasService.aliases$;
     this.textAliases$ = this.aliases$.pipe(map(list => list.filter(al => al.type === 'text')));
     this.imageAliases$ = this.aliases$.pipe(map(list => list.filter(al => al.type === 'image')));
@@ -132,5 +136,9 @@ export class AliasLibraryComponent {
 
   updateImageSize(id: number, newSize: number): void {
     this.aliasService.updateAlias(id, { defaultSize: newSize });
+  }
+
+  getAliasPreview(content: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(content);
   }
 }
