@@ -14,6 +14,7 @@ import { map } from 'rxjs';
 export class AliasLibraryComponent {
   showTextForm = false;
   editingTextAliasId: number | null = null;
+  activeTab: 'text' | 'image' = 'text';
 
   textForm = {
     name: '',
@@ -37,6 +38,14 @@ export class AliasLibraryComponent {
     this.imageAliases$ = this.aliases$.pipe(map(list => list.filter(al => al.type === 'image')));
     this.hasTextAliases$ = this.textAliases$.pipe(map(list => list.length > 0));
     this.hasImageAliases$ = this.imageAliases$.pipe(map(list => list.length > 0));
+  }
+
+  setActiveTab(tab: 'text' | 'image'): void {
+    this.activeTab = tab;
+    if (tab === 'image') {
+      this.showTextForm = false;
+      this.cancelEditTextAlias();
+    }
   }
 
   addTextAlias(): void {

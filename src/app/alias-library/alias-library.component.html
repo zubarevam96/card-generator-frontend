@@ -2,15 +2,41 @@
     <div class="alias-header">
         <h3>Aliases</h3>
         <div class="header-actions">
-            <button type="button" (click)="showTextForm = !showTextForm" class="add-btn">
+            <button
+                type="button"
+                class="add-btn"
+                *ngIf="activeTab === 'text'"
+                (click)="showTextForm = !showTextForm"
+            >
                 {{ showTextForm ? 'Cancel' : '+ Text' }}
             </button>
-            <button type="button" (click)="imageInput.click()" class="add-btn">+ Image</button>
+            <button type="button" class="add-btn" *ngIf="activeTab === 'image'" (click)="imageInput.click()">
+                + Image
+            </button>
             <input #imageInput type="file" accept="image/*" hidden (change)="onImageSelected($event)">
         </div>
     </div>
 
-    <div class="form-section" *ngIf="showTextForm">
+    <div class="tab-bar">
+        <button
+            type="button"
+            class="tab"
+            [class.tab--active]="activeTab === 'text'"
+            (click)="setActiveTab('text')"
+        >
+            Text Aliases
+        </button>
+        <button
+            type="button"
+            class="tab"
+            [class.tab--active]="activeTab === 'image'"
+            (click)="setActiveTab('image')"
+        >
+            Image Aliases
+        </button>
+    </div>
+
+    <div class="form-section" *ngIf="activeTab === 'text' && showTextForm">
         <div class="form-group">
             <label>Alias Name</label>
             <input type="text" [(ngModel)]="textForm.name" placeholder="e.g., Rare Badge">
@@ -23,7 +49,7 @@
     </div>
 
     <div class="aliases-list">
-        <div class="list-section">
+        <div class="list-section" *ngIf="activeTab === 'text'">
             <h4>Text Aliases</h4>
             <div class="alias-item" *ngFor="let al of (textAliases$ | async)">
                 <div class="text-alias">
@@ -58,7 +84,7 @@
             </div>
         </div>
 
-        <div class="list-section">
+        <div class="list-section" *ngIf="activeTab === 'image'">
             <h4>Image Aliases</h4>
             <div class="alias-item" *ngFor="let al of (imageAliases$ | async)">
                 <div class="image-alias">
@@ -81,7 +107,11 @@
     </div>
 
     <div class="alias-fab">
-        <button type="button" class="fab-btn" (click)="showTextForm = true">+ Text</button>
-        <button type="button" class="fab-btn" (click)="imageInput.click()">+ Image</button>
+        <button type="button" class="fab-btn" *ngIf="activeTab === 'text'" (click)="showTextForm = true">
+            + Text
+        </button>
+        <button type="button" class="fab-btn" *ngIf="activeTab === 'image'" (click)="imageInput.click()">
+            + Image
+        </button>
     </div>
 </div>
