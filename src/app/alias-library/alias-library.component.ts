@@ -15,6 +15,7 @@ export class AliasLibraryComponent {
   showTextForm = false;
   editingTextAliasId: number | null = null;
   activeTab: 'text' | 'image' = 'text';
+  isEditModalOpen = false;
 
   textForm = {
     name: '',
@@ -68,11 +69,13 @@ export class AliasLibraryComponent {
   startEditTextAlias(alias: { id: number; name: string; content: string }): void {
     this.editingTextAliasId = alias.id;
     this.editTextForm = { name: alias.name, content: alias.content };
+    this.isEditModalOpen = true;
   }
 
   cancelEditTextAlias(): void {
     this.editingTextAliasId = null;
     this.editTextForm = { name: '', content: '' };
+    this.isEditModalOpen = false;
   }
 
   saveTextAlias(): void {

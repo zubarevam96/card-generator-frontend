@@ -51,32 +51,16 @@
     <div class="aliases-list">
         <div class="list-section" *ngIf="activeTab === 'text'">
             <h4>Text Aliases</h4>
-            <div class="alias-item" *ngFor="let al of (textAliases$ | async)">
-                <div class="text-alias">
-                    <ng-container *ngIf="editingTextAliasId !== al.id; else editTextAlias">
+            <div class="alias-grid">
+                <div class="alias-item" *ngFor="let al of (textAliases$ | async)">
+                    <div class="text-alias">
                         <div class="alias-name">{{ al.name }}</div>
                         <div class="alias-preview" [innerHTML]="al.content"></div>
                         <div class="alias-actions">
                             <button type="button" (click)="startEditTextAlias(al)" class="edit-btn">Edit</button>
                             <button type="button" (click)="deleteAlias(al.id)" class="delete-btn">Delete</button>
                         </div>
-                    </ng-container>
-                    <ng-template #editTextAlias>
-                        <div class="edit-form">
-                            <div class="form-group">
-                                <label>Alias Name</label>
-                                <input type="text" [(ngModel)]="editTextForm.name" placeholder="e.g., Rare Badge">
-                            </div>
-                            <div class="form-group">
-                                <label>HTML Content</label>
-                                <textarea [(ngModel)]="editTextForm.content" placeholder="e.g., &lt;div style=&quot;color:red&quot;&gt;Text&lt;/div&gt;" rows="4"></textarea>
-                            </div>
-                            <div class="alias-actions">
-                                <button type="button" (click)="saveTextAlias()" class="save-btn">Save</button>
-                                <button type="button" (click)="cancelEditTextAlias()" class="cancel-btn">Cancel</button>
-                            </div>
-                        </div>
-                    </ng-template>
+                    </div>
                 </div>
             </div>
             <div class="empty-state" *ngIf="!(hasTextAliases$ | async)">
@@ -86,18 +70,20 @@
 
         <div class="list-section" *ngIf="activeTab === 'image'">
             <h4>Image Aliases</h4>
-            <div class="alias-item" *ngFor="let al of (imageAliases$ | async)">
-                <div class="image-alias">
-                    <div class="alias-name">{{ al.name }}</div>
-                    <div class="image-preview-wrapper">
-                        <img [src]="al.dataUrl" [alt]="al.name" class="image-preview">
+            <div class="alias-grid">
+                <div class="alias-item" *ngFor="let al of (imageAliases$ | async)">
+                    <div class="image-alias">
+                        <div class="alias-name">{{ al.name }}</div>
+                        <div class="image-preview-wrapper">
+                            <img [src]="al.dataUrl" [alt]="al.name" class="image-preview">
+                        </div>
+                        <div class="size-control">
+                            <label>Size:</label>
+                            <input type="number" [value]="al.defaultSize" (change)="updateImageSize(al.id, +$event.target.value)" min="4" max="128">
+                            <span>px</span>
+                        </div>
+                        <button type="button" (click)="deleteAlias(al.id)" class="delete-btn">Delete</button>
                     </div>
-                    <div class="size-control">
-                        <label>Size:</label>
-                        <input type="number" [value]="al.defaultSize" (change)="updateImageSize(al.id, +$event.target.value)" min="4" max="128">
-                        <span>px</span>
-                    </div>
-                    <button type="button" (click)="deleteAlias(al.id)" class="delete-btn">Delete</button>
                 </div>
             </div>
             <div class="empty-state" *ngIf="!(hasImageAliases$ | async)">
@@ -113,5 +99,28 @@
         <button type="button" class="fab-btn" *ngIf="activeTab === 'image'" (click)="imageInput.click()">
             + Image
         </button>
+    </div>
+
+    <div class="alias-modal-backdrop" *ngIf="isEditModalOpen" (click)="cancelEditTextAlias()">
+        <div class="alias-modal" (click)="$event.stopPropagation()">
+            <div class="alias-modal__header">
+                <h4>Edit Text Alias</h4>
+                <button type="button" class="close-btn" (click)="cancelEditTextAlias()">Close</button>
+            </div>
+            <div class="edit-form">
+                <div class="form-group">
+                    <label>Alias Name</label>
+                    <input type="text" [(ngModel)]="editTextForm.name" placeholder="e.g., Rare Badge">
+                </div>
+                <div class="form-group">
+                    <label>HTML Content</label>
+                    <textarea [(ngModel)]="editTextForm.content" placeholder="e.g., &lt;div style=&quot;color:red&quot;&gt;Text&lt;/div&gt;" rows="8"></textarea>
+                </div>
+                <div class="alias-actions">
+                    <button type="button" (click)="saveTextAlias()" class="save-btn">Save</button>
+                    <button type="button" (click)="cancelEditTextAlias()" class="cancel-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
