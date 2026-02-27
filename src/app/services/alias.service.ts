@@ -164,15 +164,17 @@ export class AliasService {
     this.saveAliases();
   }
 
-  getAliasReference(name: string): string {
+  getAliasReference(name: string, args: string[] = []): string {
     const normalized = this.normalizeName(name);
     const alias = this.aliasSubject.value.find(al => this.normalizeName(al.name) === normalized);
     if (!alias) return '';
 
     if (alias.type === 'text') {
-      return alias.content;
+      return this.applyArgsToContent(alias.content, args);
     } else {
-      return `<img src="${alias.dataUrl}" alt="${alias.name}" width="${alias.defaultSize}" height="${alias.defaultSize}" style="vertical-align:middle; display: inline">`;
+      const width = this.getArgOrDefault(args, 0, alias.defaultSize.toString());
+      const height = this.getArgOrDefault(args, 1, alias.defaultSize.toString());
+      return `<img src="${alias.dataUrl}" alt="${alias.name}" width="${width}" height="${height}" style="vertical-align:middle; display: inline">`;
     }
   }
 
@@ -183,11 +185,43 @@ export class AliasService {
     if (!aliases.length) return html;
 
     return html.replace(this.aliasRegex, (match, nameText: string) => {
-      const normalized = this.normalizeName(nameText);
-      const alias = aliases.find(al => this.normalizeName(al.name) === normalized);
+      const parsed = this.parseAliasCall(nameText);
+      if (!parsed) return match;
+      const alias = aliases.find(al => this.normalizeName(al.name) === parsed.name);
       if (!alias) return match;
-      return this.getAliasReference(alias.name);
+      return this.getAliasReference(alias.name, parsed.args);
     });
+  }
+
+  private parseAliasCall(raw: string): { name: string; args: string[] } | null {
+    if (!raw) return null;
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+
+    const colonIndex = trimmed.indexOf(':');
+    if (colonIndex === -1) {
+      return { name: this.normalizeName(trimmed), args: [] };
+    }
+
+    const name = this.normalizeName(trimmed.slice(0, colonIndex));
+    const argText = trimmed.slice(colonIndex + 1);
+    const args = argText.length ? argText.split(',') : [];
+    return { name, args: args.map(arg => arg.trim()) };
+  }
+
+  private applyArgsToContent(content: string, args: string[]): string {
+    if (!content) return content;
+    let argIndex = 0;
+    return content.replace(/\{([^{}]*)\}/g, (match, defaultValue: string) => {
+      const arg = args[argIndex];
+      argIndex += 1;
+      return this.getArgOrDefault([arg ?? ''], 0, defaultValue);
+    });
+  }
+
+  private getArgOrDefault(args: string[], index: number, fallback: string): string {
+    const value = args[index];
+    return value && value.trim() !== '' ? value.trim() : fallback;
   }
 
   private normalizeName(name: string): string {
