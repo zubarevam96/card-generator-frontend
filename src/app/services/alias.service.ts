@@ -193,6 +193,10 @@ export class AliasService {
     });
   }
 
+  applyDefaultValuesToContent(content: string): string {
+    return this.applyArgsToContent(content, []);
+  }
+
   private parseAliasCall(raw: string): { name: string; args: string[] } | null {
     if (!raw) return null;
     const trimmed = raw.trim();

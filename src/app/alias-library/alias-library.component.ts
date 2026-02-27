@@ -139,6 +139,7 @@ export class AliasLibraryComponent {
   }
 
   getAliasPreview(content: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(content);
+    const resolved = this.aliasService.applyDefaultValuesToContent(content);
+    return this.sanitizer.bypassSecurityTrustHtml(resolved);
   }
 }
