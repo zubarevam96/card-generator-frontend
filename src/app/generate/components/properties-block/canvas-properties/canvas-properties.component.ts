@@ -26,6 +26,8 @@ export class CanvasPropertiesComponent {
   smallCardMm = { w: 41, h: 63 };
   mediumCardMm = { w: 45, h: 68 };
   largeCardMm = { w: 59, h: 92 };
+  // MTG standard card preset in mm
+  mtgCardMm = { w: 63, h: 88 };
   // Computed pixel sizes for presets
   smallCardWidth = Math.round(this.smallCardMm.w * MM_TO_PX);
   smallCardHeight = Math.round(this.smallCardMm.h * MM_TO_PX);
@@ -33,6 +35,8 @@ export class CanvasPropertiesComponent {
   mediumCardHeight = Math.round(this.mediumCardMm.h * MM_TO_PX);
   largeCardWidth = Math.round(this.largeCardMm.w * MM_TO_PX);
   largeCardHeight = Math.round(this.largeCardMm.h * MM_TO_PX);
+  mtgCardWidth = Math.round(this.mtgCardMm.w * MM_TO_PX);
+  mtgCardHeight = Math.round(this.mtgCardMm.h * MM_TO_PX);
 
   constructor(private canvasService: CanvasService) {
     this.canvasService.canvas$.subscribe(
@@ -85,6 +89,13 @@ export class CanvasPropertiesComponent {
     // 59mm × 92mm -> px
     this.canvas.cardWidth = this.largeCardWidth;
     this.canvas.cardHeight = this.largeCardHeight;
+    this.updateCanvas();
+  }
+
+  setMtgStandard() {
+    // 63mm × 88mm -> px
+    this.canvas.cardWidth = this.mtgCardWidth;
+    this.canvas.cardHeight = this.mtgCardHeight;
     this.updateCanvas();
   }
 }
