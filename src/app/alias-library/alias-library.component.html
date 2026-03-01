@@ -1,21 +1,4 @@
 <div class="alias-library">
-    <div class="alias-header">
-        <h3>Aliases</h3>
-        <div class="header-actions">
-            <button
-                type="button"
-                class="add-btn"
-                *ngIf="activeTab === 'text'"
-                (click)="showTextForm = !showTextForm"
-            >
-                {{ showTextForm ? 'Cancel' : '+ Text' }}
-            </button>
-            <button type="button" class="add-btn" *ngIf="activeTab === 'image'" (click)="imageInput.click()">
-                + Image
-            </button>
-            <input #imageInput type="file" accept="image/*" hidden (change)="onImageSelected($event)">
-        </div>
-    </div>
 
     <div class="tab-bar">
         <button
@@ -36,6 +19,8 @@
         </button>
     </div>
 
+    <input #imageInput type="file" accept="image/*" hidden (change)="onImageSelected($event)">
+
     <div class="form-section" *ngIf="activeTab === 'text' && showTextForm">
         <div class="form-group">
             <label>Alias Name</label>
@@ -50,7 +35,12 @@
 
     <div class="aliases-list">
         <div class="list-section" *ngIf="activeTab === 'text'">
-            <h4>Text Aliases</h4>
+            <div class="list-section__header">
+                <h4>Text Aliases</h4>
+                <button type="button" class="add-btn" (click)="showTextForm = !showTextForm">
+                    {{ showTextForm ? 'Cancel' : '+ Text' }}
+                </button>
+            </div>
             <div class="alias-grid">
                 <div class="alias-item" *ngFor="let al of (textAliases$ | async)">
                     <div class="text-alias">
@@ -69,7 +59,12 @@
         </div>
 
         <div class="list-section" *ngIf="activeTab === 'image'">
-            <h4>Image Aliases</h4>
+            <div class="list-section__header">
+                <h4>Image Aliases</h4>
+                <button type="button" class="add-btn" (click)="imageInput.click()">
+                    + Image
+                </button>
+            </div>
             <div class="alias-grid">
                 <div class="alias-item" *ngFor="let al of (imageAliases$ | async)">
                     <div class="image-alias">

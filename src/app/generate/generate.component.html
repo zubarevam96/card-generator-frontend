@@ -25,8 +25,6 @@
     </button>
 </div>
 
-<div class="active-tab-debug">Active tab: {{ activeTab }}</div>
-
 <div class="generate-layout" [hidden]="activeTab !== 'canvas'" [style.gridTemplateColumns]="gridTemplateColumns">
     <aside class="side left" [class.collapsed]="!showProperties">
         <div [hidden]="!showProperties">
@@ -72,7 +70,6 @@
 </div>
 
 <div class="aliases-view" [hidden]="activeTab !== 'aliases'">
-    <div class="aliases-placeholder">Aliases content</div>
     <app-alias-library></app-alias-library>
 </div>
 

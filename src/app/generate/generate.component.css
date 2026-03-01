@@ -1,12 +1,12 @@
 .global-tabs {
     display: flex;
     gap: 4px;
-    padding: 12px 12px 0 12px;
     background: #f8f8f8;
-    border-bottom: 2px solid #ddd;
     position: sticky;
     top: 0;
     z-index: 5;
+    margin: -20px -20px 0;
+    padding: 0 20px;
 }
 
 .global-tab {
@@ -131,7 +131,7 @@
 }
 
 .divider {
-    position: relative;
+    position: sticky;
     top: 12px;
     height: calc(100vh - 24px);
     background: transparent;
