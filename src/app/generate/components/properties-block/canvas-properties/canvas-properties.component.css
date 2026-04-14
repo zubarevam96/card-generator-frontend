@@ -13,7 +13,7 @@
 
 .property-group {
     margin-bottom: 12px;
-    width: 20px;
+    width: 100%;
 }
 
 .property-group label {
@@ -24,11 +24,18 @@
     font-size: 14px;
 }
 
+.input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .property-group input {
     padding: 6px 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
+    width: 120px;
 }
 
 .property-group input:focus {
@@ -56,24 +63,7 @@
     color: #555;
 }
 
-.presets button {
-    padding: 6px 10px;
-    background-color: #e9ecef;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 500;
-    transition: background-color 0.2s;
-}
 
-.presets button:hover {
-    background-color: #dee2e6;
-}
-
-.presets button:active {
-    background-color: #ced4da;
-}
 
 .card-presets .preset-row {
     display: flex;

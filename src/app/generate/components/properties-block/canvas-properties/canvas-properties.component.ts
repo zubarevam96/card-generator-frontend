@@ -13,7 +13,8 @@ const A4_HEIGHT_MM = 297;
   selector: 'app-canvas-properties',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './canvas-properties.component.html'
+  templateUrl: './canvas-properties.component.html',
+  styleUrls: ['./canvas-properties.component.css']
 })
 export class CanvasPropertiesComponent {
   canvas: Canvas = new Canvas();

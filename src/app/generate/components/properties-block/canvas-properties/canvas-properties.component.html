@@ -4,16 +4,30 @@
     <div class="property-group">
         <label>
             Canvas Width (pixels):
-            <input type="number" [(ngModel)]="canvas.canvasWidth" (input)="updateCanvas()" placeholder="PDF width in pixels" />
-            <span class="hint">{{ (canvas.canvasWidth * 0.264583).toFixed(1) }}mm</span>
+            <div class="input-row">
+                <input
+                    type="number"
+                    [(ngModel)]="canvas.canvasWidth"
+                    (input)="updateCanvas()"
+                    placeholder="PDF width in pixels"
+                />
+                <span class="hint">{{ (canvas.canvasWidth * 0.264583).toFixed(1) }}mm</span>
+            </div>
         </label>
     </div>
 
     <div class="property-group">
         <label>
             Canvas Height (pixels):
-            <input type="number" [(ngModel)]="canvas.canvasHeight" (input)="updateCanvas()" placeholder="PDF height in pixels" />
-            <span class="hint">{{ (canvas.canvasHeight * 0.264583).toFixed(1) }}mm</span>
+            <div class="input-row">
+                <input
+                    type="number"
+                    [(ngModel)]="canvas.canvasHeight"
+                    (input)="updateCanvas()"
+                    placeholder="PDF height in pixels"
+                />
+                <span class="hint">{{ (canvas.canvasHeight * 0.264583).toFixed(1) }}mm</span>
+            </div>
         </label>
     </div>
 
@@ -30,14 +44,20 @@
     <div class="property-group">
         <label>
             Card Width:
-            <input type="number" [(ngModel)]="canvas.cardWidth" (input)="updateCanvas()" />
+            <div class="input-row">
+                <input type="number" [(ngModel)]="canvas.cardWidth" (input)="updateCanvas()" />
+                <span class="hint">{{ (canvas.cardWidth * 0.264583).toFixed(1) }}mm</span>
+            </div>
         </label>
     </div>
 
     <div class="property-group">
         <label>
             Card Height:
-            <input type="number" [(ngModel)]="canvas.cardHeight" (input)="updateCanvas()" />
+            <div class="input-row">
+                <input type="number" [(ngModel)]="canvas.cardHeight" (input)="updateCanvas()" />
+                <span class="hint">{{ (canvas.cardHeight * 0.264583).toFixed(1) }}mm</span>
+            </div>
         </label>
     </div>
 
