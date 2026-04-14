@@ -18,9 +18,9 @@
     </div>
 
     <div class="presets">
-        <h5>Paper Sizes</h5>
-        <button (click)="setA4Portrait()">A4 Portrait ({{a4PortraitWidth}}x{{a4PortraitHeight}})</button>
-        <button (click)="setA4Landscape()">A4 Landscape ({{a4LandscapeWidth}}x{{a4LandscapeHeight}})</button>
+        <h5>Paper Size Presets</h5>
+        <button (click)="setA4Portrait()" title="210x297mm — {{a4PortraitWidth}}x{{a4PortraitHeight}}px">A4 Portrait</button>
+        <button (click)="setA4Landscape()" title="297x210mm — {{a4LandscapeWidth}}x{{a4LandscapeHeight}}px">A4 Landscape</button>
     </div>
 
     <hr>
@@ -56,12 +56,32 @@
     </div>
 
     <div class="presets card-presets">
-        <h5>Card Size Presets (Eurogame)</h5>
+        <h5>Card Size Presets</h5>
         <div class="preset-row">
-            <button (click)="setEurogameSmall()">Small (41×63mm — {{smallCardWidth}}x{{smallCardHeight}}px)</button>
-            <button (click)="setEurogameMedium()">Medium (45×68mm — {{mediumCardWidth}}x{{mediumCardHeight}}px)</button>
-            <button (click)="setEurogameLarge()">Large (59×92mm — {{largeCardWidth}}x{{largeCardHeight}}px)</button>
-            <button (click)="setMtgStandard()">MTG Standard (63×88mm — {{mtgCardWidth}}x{{mtgCardHeight}}px)</button>
+            <button
+                (click)="setEurogameSmall()"
+                title="41×63mm — {{smallCardWidth}}x{{smallCardHeight}}px"
+            >
+                Small
+            </button>
+            <button
+                (click)="setEurogameMedium()"
+                title="45×68mm — {{mediumCardWidth}}x{{mediumCardHeight}}px"
+            >
+                Medium
+            </button>
+            <button
+                (click)="setEurogameLarge()"
+                title="59×92mm — {{largeCardWidth}}x{{largeCardHeight}}px"
+            >
+                Large
+            </button>
+            <button
+                (click)="setMtgStandard()"
+                title="63×88mm — {{mtgCardWidth}}x{{mtgCardHeight}}px"
+            >
+                MTG Standard
+            </button>
         </div>
     </div>
 </div>
