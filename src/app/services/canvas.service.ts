@@ -478,7 +478,7 @@ export class CanvasService {
     const cards = Array.isArray(payload.cards) ? payload.cards : [];
     cards.forEach((c: any, index: number) => {
       const cardName = c?.name && c.name.trim().length > 0 ? c.name : `Imported Card ${index + 1}`;
-      const cardHtml = c?.templateHtml ?? '';
+      const cardHtmlFromPayload = c?.templateHtml;
       const cardVars = c?.variables ?? {};
       const cardFontSizes = c?.variableFontSizes ?? {};
 
@@ -494,10 +494,15 @@ export class CanvasService {
           templateId: c?.templateId,
           templateOriginalId: c?.templateOriginalId ?? c?.templateId,
           templateHash: c?.templateHash,
-          templateHtml: cardHtml,
+          templateHtml: cardHtmlFromPayload,
           templateName: c?.templateName,
           canvasId: importedCanvas.id
         });
+
+      const cardHtml =
+        typeof cardHtmlFromPayload === 'string' && cardHtmlFromPayload.length > 0
+          ? cardHtmlFromPayload
+          : resolvedTemplate.templateHtml;
 
       this.cardStorageService.addCard(
         cardName,
