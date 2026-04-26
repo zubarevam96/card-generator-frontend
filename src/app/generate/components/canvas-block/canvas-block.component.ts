@@ -246,7 +246,12 @@ export class CanvasBlockComponent {
       cards: this.cards.length,
       canvasId: this.canvas.id
     });
-    this.pdfExportService.exportCardsToPdf(this.cards, this.canvas, 'cards');
+    try {
+      await this.pdfExportService.exportCardsToPdf(this.cards, this.canvas, 'cards');
+    } catch (error) {
+      this.loggingService.log('canvas-block', 'error', 'PDF export failed', error);
+      alert('Failed to export PDF. Please try again.');
+    }
   }
 
   exportCanvasJson() {

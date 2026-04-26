@@ -18,7 +18,7 @@ export class PdfExportService {
    * @param canvas - Canvas object containing dimensions
    * @param filename - Name of the PDF file (without .pdf extension)
    */
-  exportCardsToPdf(cards: Card[], canvas: Canvas, filename: string = 'cards'): void {
+  async exportCardsToPdf(cards: Card[], canvas: Canvas, filename: string = 'cards'): Promise<void> {
     if (cards.length === 0) {
       this.loggingService.log('exporting', 'error', 'No cards to export');
       return;
@@ -56,18 +56,14 @@ export class PdfExportService {
     }
 
     // Generate PDF with multiple pages
-    this.generatePdfPages(pages, canvas, cardsPerRow, filename);
-  }
-
-  /**
-   * Generate PDF with card-aware page breaks
-   */
-  private generatePdfPages(pages: Card[][], canvas: Canvas, cardsPerRow: number, filename: string): void {
-    this.createMultiPagePdf(pages, canvas, cardsPerRow, filename).catch((error) => {
+    try {
+      await this.createMultiPagePdf(pages, canvas, cardsPerRow, filename);
+    } catch (error) {
       this.loggingService.log('exporting', 'error', 'PDF export failed', {
         error: this.serializeError(error)
       });
-    });
+      throw error;
+    }
   }
 
   /**
@@ -151,12 +147,7 @@ export class PdfExportService {
     const pdfBuffer = new ArrayBuffer(pdfBytes.byteLength);
     new Uint8Array(pdfBuffer).set(pdfBytes);
     const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${filename}.pdf`;
-    link.click();
-    URL.revokeObjectURL(url);
+    this.triggerDownload(blob, `${filename}.pdf`);
 
     this.loggingService.log('exporting', 'info', 'PDF export completed', {
       pages: pages.length,
@@ -491,6 +482,29 @@ export class PdfExportService {
 
   private transparentPixel(): string {
     return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
+  }
+
+  private triggerDownload(blob: Blob, filename: string): void {
+    const navigatorWithLegacyDownload = window.navigator as Navigator & {
+      msSaveOrOpenBlob?: (blobData: Blob, defaultName?: string) => boolean;
+    };
+
+    if (navigatorWithLegacyDownload.msSaveOrOpenBlob) {
+      navigatorWithLegacyDownload.msSaveOrOpenBlob(blob, filename);
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Revoke asynchronously so browsers can start the download first.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   private serializeError(error: unknown): { message?: string; stack?: string; name?: string; raw?: string; type?: string; targetSrc?: string } {
