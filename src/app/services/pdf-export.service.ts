@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { saveAs } from 'file-saver';
 import { toPng } from 'html-to-image';
 import { PDFDocument } from 'pdf-lib';
 import { Card } from '../models/card.model';
@@ -485,6 +486,19 @@ export class PdfExportService {
   }
 
   private triggerDownload(blob: Blob, filename: string): void {
+    try {
+      saveAs(blob, filename);
+      this.loggingService.log('exporting', 'debug', 'Triggered download with FileSaver', {
+        filename,
+        bytes: blob.size
+      });
+      return;
+    } catch (error) {
+      this.loggingService.log('exporting', 'error', 'FileSaver download failed, using fallback', {
+        error: this.serializeError(error)
+      });
+    }
+
     const navigatorWithLegacyDownload = window.navigator as Navigator & {
       msSaveOrOpenBlob?: (blobData: Blob, defaultName?: string) => boolean;
     };
@@ -495,16 +509,37 @@ export class PdfExportService {
     }
 
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    let clicked = false;
+
+    try {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.rel = 'noopener noreferrer';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      clicked = true;
+    } catch (error) {
+      this.loggingService.log('exporting', 'error', 'Anchor download failed, trying new-tab fallback', {
+        error: this.serializeError(error)
+      });
+    }
+
+    if (!clicked) {
+      const opened = window.open(url, '_blank', 'noopener,noreferrer');
+      if (!opened) {
+        this.loggingService.log('exporting', 'error', 'Browser blocked PDF download fallback', {
+          filename
+        });
+        URL.revokeObjectURL(url);
+        throw new Error('Browser blocked PDF download. Please allow downloads/pop-ups for this site.');
+      }
+    }
 
     // Revoke asynchronously so browsers can start the download first.
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
   }
 
   private serializeError(error: unknown): { message?: string; stack?: string; name?: string; raw?: string; type?: string; targetSrc?: string } {
