@@ -241,14 +241,29 @@ export class CanvasBlockComponent {
       this.loggingService.log('canvas-block', 'error', 'No cards to export');
       return;
     }
+
+    // Open fallback tab while we're still in the original user click gesture.
+    const fallbackWindow = window.open('', '_blank', 'noopener,noreferrer');
+    if (fallbackWindow && !fallbackWindow.closed) {
+      fallbackWindow.document.title = 'Preparing PDF...';
+      fallbackWindow.document.body.style.fontFamily = 'sans-serif';
+      fallbackWindow.document.body.style.padding = '16px';
+      fallbackWindow.document.body.textContent = 'Preparing PDF...';
+    }
+
     await this.canvasService.flushPendingTemplateUpdates();
     this.loggingService.log('canvas-block', 'info', 'Exporting cards to PDF', {
       cards: this.cards.length,
       canvasId: this.canvas.id
     });
     try {
-      await this.pdfExportService.exportCardsToPdf(this.cards, this.canvas, 'cards');
+      await this.pdfExportService.exportCardsToPdf(this.cards, this.canvas, 'cards', {
+        fallbackWindow
+      });
     } catch (error) {
+      if (fallbackWindow && !fallbackWindow.closed) {
+        fallbackWindow.close();
+      }
       this.loggingService.log('canvas-block', 'error', 'PDF export failed', error);
       alert('Failed to export PDF. Please try again.');
     }

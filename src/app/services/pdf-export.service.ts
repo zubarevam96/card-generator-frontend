@@ -19,7 +19,12 @@ export class PdfExportService {
    * @param canvas - Canvas object containing dimensions
    * @param filename - Name of the PDF file (without .pdf extension)
    */
-  async exportCardsToPdf(cards: Card[], canvas: Canvas, filename: string = 'cards'): Promise<void> {
+  async exportCardsToPdf(
+    cards: Card[],
+    canvas: Canvas,
+    filename: string = 'cards',
+    options?: { fallbackWindow?: Window | null }
+  ): Promise<void> {
     if (cards.length === 0) {
       this.loggingService.log('exporting', 'error', 'No cards to export');
       return;
@@ -58,7 +63,7 @@ export class PdfExportService {
 
     // Generate PDF with multiple pages
     try {
-      await this.createMultiPagePdf(pages, canvas, cardsPerRow, filename);
+      await this.createMultiPagePdf(pages, canvas, cardsPerRow, filename, options?.fallbackWindow);
     } catch (error) {
       this.loggingService.log('exporting', 'error', 'PDF export failed', {
         error: this.serializeError(error)
@@ -70,7 +75,13 @@ export class PdfExportService {
   /**
    * Create PDF with multiple pages (one per page array)
    */
-  private async createMultiPagePdf(pages: Card[][], canvas: Canvas, cardsPerRow: number, filename: string): Promise<void> {
+  private async createMultiPagePdf(
+    pages: Card[][],
+    canvas: Canvas,
+    cardsPerRow: number,
+    filename: string,
+    fallbackWindow?: Window | null
+  ): Promise<void> {
     const mmToPt = (mm: number) => (mm * 72) / 25.4;
     const canvasWidthMm = canvas.canvasWidth * 0.264583;
     const canvasHeightMm = canvas.canvasHeight * 0.264583;
@@ -148,7 +159,7 @@ export class PdfExportService {
     const pdfBuffer = new ArrayBuffer(pdfBytes.byteLength);
     new Uint8Array(pdfBuffer).set(pdfBytes);
     const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
-    this.triggerDownload(blob, `${filename}.pdf`);
+    this.triggerDownload(blob, `${filename}.pdf`, fallbackWindow);
 
     this.loggingService.log('exporting', 'info', 'PDF export completed', {
       pages: pages.length,
@@ -485,9 +496,12 @@ export class PdfExportService {
     return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
   }
 
-  private triggerDownload(blob: Blob, filename: string): void {
+  private triggerDownload(blob: Blob, filename: string, fallbackWindow?: Window | null): void {
     try {
       saveAs(blob, filename);
+      if (fallbackWindow && !fallbackWindow.closed) {
+        fallbackWindow.close();
+      }
       this.loggingService.log('exporting', 'debug', 'Triggered download with FileSaver', {
         filename,
         bytes: blob.size
@@ -505,6 +519,9 @@ export class PdfExportService {
 
     if (navigatorWithLegacyDownload.msSaveOrOpenBlob) {
       navigatorWithLegacyDownload.msSaveOrOpenBlob(blob, filename);
+      if (fallbackWindow && !fallbackWindow.closed) {
+        fallbackWindow.close();
+      }
       return;
     }
 
@@ -521,6 +538,9 @@ export class PdfExportService {
       link.click();
       document.body.removeChild(link);
       clicked = true;
+      if (fallbackWindow && !fallbackWindow.closed) {
+        fallbackWindow.close();
+      }
     } catch (error) {
       this.loggingService.log('exporting', 'error', 'Anchor download failed, trying new-tab fallback', {
         error: this.serializeError(error)
@@ -528,6 +548,16 @@ export class PdfExportService {
     }
 
     if (!clicked) {
+      if (fallbackWindow && !fallbackWindow.closed) {
+        fallbackWindow.location.href = url;
+        this.loggingService.log('exporting', 'info', 'Opened PDF in fallback tab', {
+          filename
+        });
+        // Keep URL alive long enough for fallback tab to load.
+        setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000);
+        return;
+      }
+
       const opened = window.open(url, '_blank', 'noopener,noreferrer');
       if (!opened) {
         this.loggingService.log('exporting', 'error', 'Browser blocked PDF download fallback', {
